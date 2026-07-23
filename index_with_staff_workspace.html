@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+
+<html lang="uk"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>RadiologyOS — Відділення променевої діагностики</title><style>
+:root{
+  --bg:#f5f3ed;--paper:#fff;--ink:#141712;--muted:#667062;--dark:#182213;
+  --dark2:#2c3924;--olive:#4f6140;--beige:#ead7ad;--line:#e0e4da;
+  --gold:#f4c64f;--shadow:0 16px 42px rgba(24,34,19,.12);--r:24px
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);line-height:1.45}
+a{text-decoration:none;color:inherit}.wrap{width:min(1160px,calc(100% - 28px));margin:auto}
+header{position:sticky;top:0;z-index:50;background:linear-gradient(90deg,var(--dark),var(--dark2));color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.header-row{min-height:84px;display:flex;align-items:center;gap:18px}
+.brand{display:flex;align-items:center;gap:13px}.mark{width:54px;height:54px;border:2px solid #ead8b4;border-radius:17px;display:grid;place-items:center;font-weight:950}
+.brand strong{font-size:26px;display:block;line-height:1}.brand small{display:block;margin-top:6px;color:#e6eadf}
+nav{margin-left:auto;display:flex;align-items:center;gap:22px;font-weight:800;font-size:14px}
+.call{padding:12px 16px;border-radius:13px;background:var(--beige);color:#1d2419}
+.hero{padding:22px 0 0}
+.audience{display:grid;grid-template-columns:1fr 1fr;border-radius:22px;overflow:hidden;box-shadow:var(--shadow)}
+.audience>div{padding:20px 24px;min-height:120px;display:flex;gap:15px;align-items:center}
+.military{background:linear-gradient(135deg,#152011,#35432b);color:white}.civil{background:linear-gradient(135deg,#f4e8cf,#e6cb95)}
+.icon{width:58px;height:58px;border-radius:17px;background:rgba(255,255,255,.12);display:grid;place-items:center;font-weight:950;flex:0 0 58px}
+.civil .icon{background:rgba(26,36,20,.08)}.audience strong{display:block;font-size:21px}.audience span{font-size:14px}
+.support{margin-top:14px;border-radius:18px;padding:17px 22px;background:#27331f;color:white;font-size:17px;font-weight:850}
+.support b{color:var(--gold)}
+.hero-main{margin-top:14px;min-height:455px;border-radius:24px;overflow:hidden;position:relative;box-shadow:var(--shadow);
+ background:linear-gradient(90deg,rgba(20,27,17,.96),rgba(20,27,17,.72) 41%,rgba(20,27,17,.08) 72%),
+ url('https://upload.wikimedia.org/wikipedia/commons/1/1a/Siemens_Somatom_CT_scanner.jpg') 74% center/cover no-repeat}
+.hero-copy{padding:58px 42px;max-width:540px;color:#fff}.eyebrow{text-transform:uppercase;letter-spacing:.13em;font-size:12px;font-weight:900;color:#d8c18a}
+h1{font-size:62px;line-height:1;letter-spacing:-.045em;margin:18px 0}.hero-copy p{font-size:19px;color:#ecf0e8;max-width:500px}
+.hero-actions{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 18px;border-radius:14px;font-weight:900}
+.btn.primary{background:var(--beige);color:#20261b}.btn.secondary{border:1px solid rgba(255,255,255,.35);color:#fff;background:rgba(255,255,255,.08)}
+.quick{margin-top:15px;display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:var(--shadow)}
+.quick a{padding:18px;display:flex;gap:13px;align-items:center;border-right:1px solid var(--line)}.quick a:last-child{border-right:0}
+.quick .qicon{width:48px;height:48px;border-radius:50%;background:var(--dark2);color:#eeddb3;display:grid;place-items:center;font-weight:950}
+.section{padding:56px 0}.section-head{display:flex;justify-content:space-between;gap:18px;align-items:end;margin-bottom:24px}
+.section h2{font-size:42px;line-height:1.05;letter-spacing:-.03em;margin:5px 0}.section p.lead{color:var(--muted);max-width:760px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 10px 26px rgba(24,34,19,.07)}
+.card h3{margin:8px 0 4px;font-size:18px}.card p{color:var(--muted);font-size:14px;min-height:40px}.price{font-size:26px;font-weight:950;color:var(--olive)}
+.card .mini{font-size:12px;color:var(--muted)}.card .book{margin-top:14px;width:100%;background:#edf0e9;color:#24301e}
+.price-cta{margin-top:18px;display:flex;justify-content:center}
+.features{background:#ece9df}.feature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.feature{background:#fff;border:1px solid var(--line);padding:20px;border-radius:18px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.step{background:#fff;border-radius:18px;border:1px solid var(--line);padding:20px}.num{font-size:34px;font-weight:950;color:var(--olive)}
+.contact{background:transparent;color:white;padding:22px 0 0}.contact-grid{display:block}.contact-card{max-width:760px;margin:0 auto;background:linear-gradient(135deg,#172113,#35432b);border-radius:22px;padding:26px 30px;box-shadow:var(--shadow)}.contact-card p{margin:10px 0 0;font-size:18px}
+.contact-box{border:1px solid rgba(255,255,255,.14);border-radius:17px;padding:17px;margin-bottom:11px}.contact-box small{display:block;color:#d5dccf;margin-bottom:4px}
+footer{padding:18px 0 90px;color:var(--muted);font-size:13px}
+.fixed{display:none}
+.price-page{padding:34px 0 70px}.price-group{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;margin-bottom:16px;box-shadow:0 8px 24px rgba(24,34,19,.06)}
+.price-group h2{margin:0;padding:18px 20px;background:linear-gradient(135deg,#172113,#4a5b3c);color:#fff;font-size:23px}
+table{width:100%;border-collapse:collapse}th,td{padding:13px 15px;border-bottom:1px solid var(--line);text-align:left}th{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+td:last-child,th:last-child{text-align:right;white-space:nowrap;font-weight:900}.code{color:var(--muted);width:68px}
+.note{background:#fff8e8;border:1px solid #ead8b2;border-radius:18px;padding:18px;color:#5a4b25;margin-top:20px}
+@media(max-width:900px){nav a:not(.call){display:none}.cards,.feature-grid{grid-template-columns:repeat(2,1fr)}.wrap{width:min(100% - 24px,980px)}.contact-card{max-width:680px}}
+@media(max-width:700px){
+ .wrap{width:min(100% - 18px,1160px)}.header-row{min-height:72px}.mark{width:44px;height:44px}.brand strong{font-size:21px}.brand small{font-size:10px}
+ .audience{grid-template-columns:1fr 1fr}.audience>div{padding:12px;min-height:112px;align-items:flex-start}.icon{width:42px;height:42px;flex-basis:42px;border-radius:12px;font-size:12px}
+ .audience strong{font-size:14px}.audience span{font-size:11px}.support{font-size:13px;padding:13px}
+ .hero-main{min-height:340px;background-position:78% center}.hero-copy{padding:30px 20px;max-width:62%}h1{font-size:40px}.hero-copy p{font-size:14px}
+ .quick a{padding:12px 9px;align-items:flex-start}.quick .qicon{width:40px;height:40px;flex:0 0 40px}.quick strong{font-size:14px}.quick span{font-size:11px}
+ .section{padding:36px 0}.section h2{font-size:31px}.cards,.feature-grid,.steps,.contact-grid{grid-template-columns:1fr}.contact{padding-top:14px}.contact-card{max-width:none;padding:22px 20px;border-radius:18px}.contact-card p{font-size:16px}
+ .section-head{align-items:flex-start}.section-head .btn{font-size:12px;padding:0 12px}
+ th{display:none}tr{display:grid;grid-template-columns:50px 1fr auto;border-bottom:1px solid var(--line)}td{border:0;padding:11px 8px}td:last-child{text-align:right}
+ .fixed{display:grid;grid-template-columns:1.2fr .8fr;gap:8px;position:fixed;left:8px;right:8px;bottom:8px;z-index:90;background:rgba(255,255,255,.96);padding:8px;border:1px solid var(--line);border-radius:16px;box-shadow:0 16px 38px rgba(0,0,0,.18)}
+ .fixed a{min-height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:900}.fixed a:first-child{background:var(--dark2);color:white}.fixed a:last-child{background:var(--beige)}
+}
+
+.cart-button{position:relative;display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:13px;background:#fff;color:#1d2419;font-weight:900;border:0;cursor:pointer}.cart-count{min-width:23px;height:23px;padding:0 6px;border-radius:99px;background:#f4c64f;display:grid;place-items:center;font-size:12px}.add-cart{margin-top:8px;width:100%;border:0;cursor:pointer;background:#24301e;color:#fff}.add-cart.added{background:#75816d}.row-add{border:0;background:#24301e;color:#fff;border-radius:10px;padding:9px 12px;font-weight:800;cursor:pointer;white-space:nowrap}.cart-overlay{position:fixed;inset:0;background:rgba(8,12,7,.55);z-index:120;opacity:0;pointer-events:none;transition:.2s}.cart-overlay.open{opacity:1;pointer-events:auto}.cart-drawer{position:absolute;right:0;top:0;height:100%;width:min(520px,100%);background:#f7f5ef;padding:22px;overflow:auto;box-shadow:-20px 0 60px rgba(0,0,0,.22)}.cart-head{display:flex;justify-content:space-between;align-items:center;gap:15px}.cart-close{border:0;background:#e6e8df;width:42px;height:42px;border-radius:50%;font-size:22px;cursor:pointer}.cart-empty{padding:35px 15px;text-align:center;color:#667062}.cart-item{display:grid;grid-template-columns:1fr auto;gap:10px;background:#fff;border:1px solid #e0e4da;border-radius:16px;padding:14px;margin:10px 0}.cart-item small{display:block;color:#667062}.remove-item{border:0;background:none;color:#9b3b32;cursor:pointer;font-weight:800}.cart-total{display:flex;justify-content:space-between;padding:18px 4px;font-size:21px;font-weight:950}.request-form{background:#fff;border:1px solid #e0e4da;border-radius:18px;padding:16px}.request-form h3{margin-top:0}.field{margin:11px 0}.field label{display:block;font-size:13px;font-weight:800;margin-bottom:5px}.field input,.field select,.field textarea{width:100%;padding:12px;border:1px solid #cfd4c8;border-radius:11px;font:inherit;background:#fff}.field textarea{min-height:85px;resize:vertical}.send-request{width:100%;border:0;background:#24301e;color:#fff;cursor:pointer}.cart-note{font-size:12px;color:#667062;margin:10px 0}.floating-cart{position:fixed;right:18px;bottom:20px;z-index:95;border:0;border-radius:999px;background:#ead7ad;color:#1d2419;padding:14px 18px;font-weight:950;box-shadow:0 12px 30px rgba(0,0,0,.2);cursor:pointer}.floating-cart .cart-count{display:inline-grid;margin-left:6px}
+@media(max-width:700px){.cart-button{padding:10px 12px}.cart-button .cart-label{display:none}.floating-cart{bottom:74px;right:12px}.price-group tr{grid-template-columns:46px 1fr auto}.row-add{grid-column:2/4;margin:0 8px 10px}.cart-drawer{padding:16px}}
+
+.upload-box{border:1.5px dashed #9ca893;border-radius:16px;padding:16px;background:#f7f8f4}
+.upload-title{font-weight:900;margin-bottom:4px}
+.upload-help{font-size:13px;color:var(--muted);margin-bottom:12px}
+.file-input{width:100%;padding:11px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.file-summary{margin-top:10px;font-size:13px;color:#4e5d46}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:#556050}
+.consent input{margin-top:3px;width:18px;height:18px;flex:0 0 18px}
+
+
+.card-code{display:inline-flex;margin-top:4px;padding:4px 8px;border-radius:999px;background:#f1f3ed;color:#667062;font-size:11px;font-weight:850}
+
+.audience-link{
+  position:relative;padding:20px 24px;min-height:120px;display:flex;gap:15px;
+  align-items:center;transition:transform .18s ease,filter .18s ease;
+}
+.audience-link:hover{transform:translateY(-2px);filter:brightness(1.03)}
+.audience-link:focus-visible{outline:3px solid #f4c64f;outline-offset:-3px}
+.military-link{background:linear-gradient(135deg,#152011,#35432b);color:white}
+.civil-link{background:linear-gradient(135deg,#f4e8cf,#e6cb95)}
+.audience-arrow{margin-left:auto;font-size:42px;line-height:1;font-weight:400}
+@media(max-width:700px){
+  .audience-link{padding:12px;min-height:112px;align-items:flex-start}
+  .audience-arrow{font-size:32px;align-self:center}
+}
+
+.hospital-brand-text{display:flex;flex-direction:column;gap:3px;min-width:0}
+.hospital-brand-title{font-size:24px;font-weight:850;line-height:1.15;color:#fff}
+.hospital-brand-subtitle{font-size:16px;line-height:1.25;color:#d9dfd4}
+header .wrap{gap:18px}
+header .brand{flex:1;min-width:0}
+@media(max-width:760px){
+  .hospital-brand-title{font-size:18px}
+  .hospital-brand-subtitle{font-size:13px}
+  header .brand{gap:10px}
+}
+@media(max-width:520px){
+  .hospital-brand-title{font-size:15px}
+  .hospital-brand-subtitle{font-size:11px}
+  header .logo{width:52px;height:52px;min-width:52px}
+  header .cart-button{padding:12px 14px}
+}
+
+.audience-link{
+  display:grid;
+  grid-template-columns:auto 1fr auto auto;
+  column-gap:14px;
+  row-gap:4px;
+}
+.audience-link .icon{grid-row:1 / span 2}
+.audience-link strong{grid-column:2;grid-row:1}
+.audience-link > span:not(.audience-arrow):not(.audience-detail){grid-column:2;grid-row:2}
+.audience-detail{
+  grid-column:3;
+  grid-row:1 / span 2;
+  align-self:center;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:38px;
+  padding:8px 14px;
+  border-radius:999px;
+  font-size:14px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.military-link .audience-detail{
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.22);
+  color:#fff;
+}
+.civil-link .audience-detail{
+  background:rgba(255,255,255,.45);
+  border:1px solid rgba(86,70,35,.12);
+  color:#2a2417;
+}
+.audience-arrow{grid-column:4;grid-row:1 / span 2;align-self:center}
+@media(max-width:700px){
+  .audience-link{
+    grid-template-columns:auto 1fr auto;
+    column-gap:10px;
+  }
+  .audience-link .icon{grid-row:1 / span 3}
+  .audience-link strong{grid-column:2;grid-row:1}
+  .audience-link > span:not(.audience-arrow):not(.audience-detail){grid-column:2;grid-row:2}
+  .audience-detail{grid-column:2;grid-row:3;justify-self:start;margin-top:4px;padding:6px 11px;font-size:12px;min-height:32px}
+  .audience-arrow{grid-column:3;grid-row:1 / span 3}
+}
+
+/* Fixed responsive audience cards */
+.audience{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+}
+.audience-link{
+  position:relative;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  grid-template-rows:auto auto 1fr;
+  column-gap:18px;
+  row-gap:5px;
+  min-height:150px;
+  padding:26px 28px;
+  overflow:hidden;
+}
+.audience-link .icon{
+  grid-column:1;
+  grid-row:1 / span 3;
+  align-self:center;
+}
+.audience-link strong{
+  grid-column:2;
+  grid-row:1;
+  align-self:end;
+  font-size:28px;
+  line-height:1.15;
+  white-space:normal;
+}
+.audience-link > span:not(.audience-more){
+  grid-column:2;
+  grid-row:2;
+  font-size:18px;
+  line-height:1.3;
+}
+.audience-more{
+  grid-column:2;
+  grid-row:3;
+  justify-self:end;
+  align-self:end;
+  margin-top:14px;
+  font-size:15px;
+  font-weight:850;
+  letter-spacing:.01em;
+}
+.military-link .audience-more{color:#fff}
+.civil-link .audience-more{color:#2a2417}
+
+@media(max-width:900px){
+  .audience{
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+  .audience-link{
+    min-height:165px;
+    padding:22px 20px;
+    column-gap:14px;
+  }
+  .audience-link strong{
+    font-size:22px;
+  }
+  .audience-link > span:not(.audience-more){
+    font-size:16px;
+  }
+}
+
+@media(max-width:700px){
+  .audience{
+    grid-template-columns:1fr;
+  }
+  .audience-link{
+    min-height:132px;
+    padding:20px;
+  }
+  .audience-link strong{
+    font-size:24px;
+  }
+  .audience-link > span:not(.audience-more){
+    font-size:16px;
+  }
+  .audience-more{
+    font-size:14px;
+  }
+}
+
+@media(min-width:701px) and (max-width:1100px){
+  .wrap{width:min(94%,980px)}
+  .header-row{min-height:76px}
+  .hospital-brand-title{font-size:21px}
+  .hospital-brand-subtitle{font-size:14px}
+  .audience{gap:12px}
+  .audience-link{min-height:132px;padding:20px 22px;column-gap:14px}
+  .audience-link strong{font-size:24px}
+  .audience-link > span:not(.audience-more){font-size:16px}
+  .audience-more{font-size:14px;margin-top:8px}
+}
+
+/* Audience cards stacked vertically */
+.audience{
+  grid-template-columns:1fr !important;
+  gap:16px !important;
+  max-width:760px;
+  margin:0 auto;
+  border-radius:0;
+  overflow:visible;
+  box-shadow:none;
+}
+.audience-link{
+  width:100%;
+  border-radius:22px;
+  box-shadow:var(--shadow);
+}
+@media(max-width:700px){
+  .audience{max-width:none;gap:12px !important}
+}
+
+
+/* Unified responsive card layout */
+body{padding:14px 0 24px}
+header{position:sticky;top:10px;background:transparent;box-shadow:none;padding:0 14px;z-index:50}
+.header-row{
+  width:min(960px,100%);
+  min-height:92px;
+  margin:0 auto;
+  padding:18px 20px;
+  border-radius:22px;
+  background:linear-gradient(135deg,#152011,#35432b);
+  box-shadow:var(--shadow);
+}
+.brand{min-width:0}.hospital-brand-text{min-width:0}
+.hospital-brand-title{font-size:clamp(20px,3vw,28px);line-height:1.08;overflow-wrap:anywhere}
+.hospital-brand-subtitle{font-size:clamp(13px,1.8vw,17px);margin-top:5px;color:#e6eadf}
+nav{gap:12px;flex-shrink:0}
+nav>a{display:none}
+.cart-button{white-space:nowrap}
+.hero{padding:16px 0 0}
+.wrap{width:min(960px,calc(100% - 28px))}
+.audience{max-width:none!important;width:100%;gap:14px!important}
+.audience-link{
+  min-height:140px!important;
+  padding:24px 26px!important;
+  border-radius:22px!important;
+  display:grid!important;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:18px!important;
+}
+.audience-link strong{font-size:clamp(22px,3.5vw,30px)!important;line-height:1.08}
+.audience-link span{font-size:clamp(14px,2vw,17px)!important}
+.audience-more{align-self:end;white-space:nowrap}
+.contact{padding:14px 0 0;background:transparent!important}
+.contact-grid{display:block!important}
+.contact-card{
+  width:100%;
+  min-height:auto;
+  border-radius:22px;
+  padding:22px 24px;
+  background:linear-gradient(135deg,#152011,#35432b);
+  box-shadow:var(--shadow);
+}
+.contact-card p{margin:10px 0 0;font-size:clamp(16px,2.2vw,19px)}
+.fixed{display:none!important}
+
+@media(max-width:700px){
+  body{padding-top:10px}
+  header{top:6px;padding:0 10px}
+  .header-row{min-height:80px;padding:14px 14px;border-radius:18px;gap:10px}
+  .hospital-brand-title{font-size:19px}
+  .hospital-brand-subtitle{font-size:12px}
+  .cart-button{padding:10px 12px;font-size:13px}
+  .wrap{width:min(100% - 20px,760px)}
+  .audience{gap:10px!important}
+  .audience-link{
+    min-height:118px!important;
+    padding:18px!important;
+    grid-template-columns:52px minmax(0,1fr);
+    gap:14px!important;
+  }
+  .audience-link .icon{width:52px;height:52px;flex-basis:52px;border-radius:15px}
+  .audience-more{grid-column:2;justify-self:start;margin-top:2px!important}
+  .contact-card{padding:18px;border-radius:18px}
+  .floating-cart{right:14px;bottom:14px}
+}
+
+@media(min-width:701px) and (max-width:1100px){
+  .header-row,.wrap{width:min(92vw,960px)}
+}
+
+@media(min-width:1101px){
+  .header-row,.wrap{width:min(960px,calc(100% - 40px))}
+  .audience-link{min-height:150px!important}
+}
+
+
+.address-row{
+  display:grid!important;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:16px;
+  color:#fff;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.address-label{font-weight:900;font-size:clamp(16px,2vw,20px)}
+.address-text{font-size:clamp(15px,2vw,19px);overflow:hidden;text-overflow:ellipsis}
+.address-arrow{font-size:30px;line-height:1;opacity:.9}
+.address-row:hover{filter:brightness(1.05)}
+.address-row:focus-visible{outline:3px solid #f4c64f;outline-offset:3px}
+@media(max-width:520px){
+  .address-row{gap:10px;padding:16px 14px!important}
+  .address-label{font-size:15px}
+  .address-text{font-size:13px}
+  .address-arrow{font-size:24px}
+}
+
+/* Photo cards matching the approved visual */
+.photo-audience{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:16px!important;
+  width:100%;
+  max-width:960px!important;
+  margin:0 auto;
+}
+.photo-card{
+  display:block;
+  width:100%;
+  border-radius:24px;
+  overflow:hidden;
+  box-shadow:0 16px 42px rgba(24,34,19,.14);
+  background:#fff;
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+.photo-card:hover{transform:translateY(-2px);box-shadow:0 20px 48px rgba(24,34,19,.18)}
+.photo-card:focus-visible{outline:3px solid #f4c64f;outline-offset:4px}
+.photo-card img{display:block;width:100%;height:auto;object-fit:cover}
+@media(max-width:700px){
+  .photo-audience{gap:12px!important}
+  .photo-card{border-radius:18px}
+}
+@media(min-width:1100px){
+  .header-row,.wrap{width:min(960px,calc(100% - 40px))}
+}
+
+/* Staff login card */
+.login-card{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:16px;
+  width:100%;
+  min-height:96px;
+  padding:20px 24px;
+  border-radius:24px;
+  background:linear-gradient(135deg,#ffffff,#eef1e9);
+  border:1px solid #dce2d6;
+  box-shadow:0 12px 30px rgba(24,34,19,.10);
+  transition:transform .18s ease,box-shadow .18s ease;
+}
+.login-card:hover{transform:translateY(-2px);box-shadow:0 16px 38px rgba(24,34,19,.14)}
+.login-card:focus-visible{outline:3px solid #f4c64f;outline-offset:4px}
+.login-icon{width:56px;height:56px;border-radius:17px;display:grid;place-items:center;background:linear-gradient(135deg,#172113,#35432b);color:#fff;font-size:25px}
+.login-copy strong{display:block;font-size:clamp(20px,2.5vw,28px);line-height:1.1;color:#1b2417}
+.login-copy span{display:block;margin-top:4px;font-size:clamp(13px,1.8vw,16px);color:#667062}
+.login-arrow{font-size:34px;line-height:1;color:#405138}
+@media(max-width:520px){
+  .login-card{min-height:84px;padding:16px 14px;gap:12px;border-radius:18px}
+  .login-icon{width:48px;height:48px;border-radius:14px;font-size:21px}
+  .login-copy strong{font-size:18px}
+  .login-copy span{font-size:12px}
+  .login-arrow{font-size:27px}
+}
+
+
+/* Header login menu */
+.login-menu-wrap{position:relative;flex-shrink:0}
+.header-login-button{display:inline-flex;align-items:center;gap:5px;padding:6px 4px;border:0;border-radius:8px;background:transparent;color:rgba(238,242,235,.72);font:inherit;font-size:13px;font-weight:650;cursor:pointer;box-shadow:none}
+.header-login-button::after{content:'▾';font-size:9px;opacity:.48;transition:transform .18s ease}
+.header-login-button[aria-expanded='true']::after{transform:rotate(180deg)}
+.header-login-button:hover{background:rgba(255,255,255,.045);color:rgba(255,255,255,.9)}
+.header-login-button:focus-visible{outline:3px solid #f4c64f;outline-offset:3px}
+.header-login-icon{display:none}
+.login-menu{position:absolute;right:0;top:calc(100% + 10px);width:min(290px,calc(100vw - 28px));padding:8px;border-radius:16px;background:#f7f8f4;border:1px solid #d7ddd1;box-shadow:0 18px 46px rgba(14,22,11,.24);opacity:0;visibility:hidden;transform:translateY(-6px);transition:.18s;z-index:120}
+.login-menu.open{opacity:1;visibility:visible;transform:translateY(0)}
+.login-choice{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:11px;padding:11px;border-radius:12px;color:#1d2419;text-decoration:none;border:0;background:transparent;width:100%;font:inherit;text-align:left;cursor:pointer}
+.login-choice:hover{background:#f1f3ed}
+.login-choice-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#23301e;color:#fff;font-size:18px}
+.login-choice strong{display:block;font-size:15px}
+.login-choice small{display:block;margin-top:2px;color:#6c7568;font-size:12px}
+.login-choice-arrow{font-size:22px;color:#506148}
+@media(max-width:520px){
+  .header-login-button{padding:5px 2px;font-size:12px}
+  .login-menu{right:-2px}
+}
+</style></head><body>
+<header><div class="wrap header-row"><a class="brand" href="index.html"><div class="hospital-brand-text"><div class="hospital-brand-title">Чернігівський військовий госпіталь</div><div class="hospital-brand-subtitle">Відділення променевої діагностики</div></div></a>
+<nav><a href="#contacts">Адреса</a><div class="login-menu-wrap"><button class="header-login-button" id="headerLoginButton" type="button" aria-expanded="false" aria-controls="loginMenu"><span class="header-login-icon" aria-hidden="true">◌</span><span>Вхід</span></button><div class="login-menu" id="loginMenu" role="menu"><a class="login-choice" href="staff.html" role="menuitem"><span class="login-choice-icon" aria-hidden="true">🔐</span><span><strong>Персонал</strong><small>Для лікарів і персоналу</small></span><span class="login-choice-arrow" aria-hidden="true">›</span></a><button class="login-choice" type="button" onclick="openPatientAccess()" role="menuitem"><span class="login-choice-icon" aria-hidden="true">👤</span><span><strong>Пацієнт</strong><small>Моя заявка пацієнта</small></span><span class="login-choice-arrow" aria-hidden="true">›</span></button></div></div></nav></div></header>
+<main>
+<section class="hero"><div class="wrap">
+<div class="audience photo-audience">
+<a class="photo-card" href="military.html" aria-label="Військовослужбовцям — безоплатні дослідження">
+<img src="military-card.webp" alt="Військовослужбовцям — безоплатні дослідження" loading="eager"/>
+</a>
+<a class="photo-card" href="price.html" aria-label="Цивільним пацієнтам — платні дослідження">
+<img src="civil-card.webp" alt="Цивільним пацієнтам — платні дослідження" loading="eager"/>
+</a>
+</div>
+</div></section>
+<section class="contact" id="contacts"><div class="wrap contact-grid"><a class="contact-card address-row" href="https://www.google.com/maps/dir/?api=1&amp;destination=51.497850848799%2C31.3094428162464&amp;travelmode=driving" rel="noopener" target="_blank" aria-label="Прокласти маршрут до госпіталю"><span class="address-label">Адреса</span><span class="address-text">м. Чернігів, вул. Полуботка, 40</span><span class="address-arrow" aria-hidden="true">›</span></a></div></section>
+</main>
+<div class="fixed"><a href="tel:+380972808899">Записатися</a><a href="https://wa.me/380972808899">WhatsApp</a></div>
+
+<div aria-hidden="true" class="cart-overlay" id="cartOverlay"><aside aria-label="Моя заявка" aria-modal="true" class="cart-drawer" role="dialog"><div class="cart-head"><div><div class="eyebrow" style="color:#596b4c">Попередній вибір</div><h2 style="margin:5px 0">Моя заявка</h2></div><button class="cart-close" onclick="closeCart()" type="button">×</button></div><div id="cartItems"></div><div class="cart-total"><span>Орієнтовна сума</span><span id="cartTotal">0 грн</span></div><form class="request-form" id="requestForm"><h3>Контактні дані</h3><div class="field"><label for="patientName">Ім’я та прізвище *</label><input autocomplete="name" id="patientName" required=""/></div><div class="field"><label for="patientPhone">Номер телефону *</label><input autocomplete="tel" id="patientPhone" inputmode="tel" placeholder="097 000 00 00" required=""/></div><div class="field"><label for="desiredDate">Бажана дата</label><input id="desiredDate" type="date"/></div><div class="field"><label for="referral">Направлення</label><select id="referral"><option>Є направлення</option><option>Направлення ще немає</option><option>Потрібна консультація</option></select></div>
+<div class="field">
+<label>Попередній письмовий висновок <span style="font-weight:500;color:#788175">(необов’язково)</span></label>
+<div class="upload-box">
+<div class="upload-title">📎 Додати попередній висновок</div>
+<div class="upload-help">Попередній письмовий висновок КТ, МРТ або рентгенографії у форматі фото чи PDF.</div>
+<input accept="image/*,.pdf" class="file-input" id="medicalFiles" multiple="" type="file"/>
+<div class="file-summary" id="fileSummary">Файли не вибрано</div>
+</div>
+</div>
+<label class="consent">
+<input id="dataConsent" required="" type="checkbox"/>
+<span>Погоджуюся на обробку персональних і медичних даних з метою організації діагностичного дослідження.</span>
+</label>
+<div class="field"><label for="comment">Коментар</label><textarea id="comment" placeholder="Зручний час для дзвінка або інша інформація"></textarea></div><p class="cart-note"><strong>Важливо:</strong> WhatsApp не прикріплює файл автоматично. Після відкриття чату додайте фото або PDF попереднього висновку до повідомлення вручну. Це не онлайн-оплата і не автоматичне підтвердження запису.</p><button class="btn send-request" type="submit">Надіслати заявку у WhatsApp</button></form></aside></div><button class="floating-cart" onclick="openCart()" type="button">Моя заявка <span class="cart-count" data-cart-count="">0</span></button>
+<script>
+const PHONE='380972808899';
+let cart=JSON.parse(localStorage.getItem('radiologyCart')||'[]');
+const money=n=>new Intl.NumberFormat('uk-UA').format(n)+' грн';
+function saveCart(){localStorage.setItem('radiologyCart',JSON.stringify(cart));renderCart()}
+function addToCart(code,name,price){if(!cart.some(x=>x.code===String(code))){cart.push({code:String(code),name,price:Number(price)});saveCart()}openCart()}
+function removeFromCart(code){cart=cart.filter(x=>x.code!==String(code));saveCart()}
+function renderCart(){document.querySelectorAll('[data-cart-count]').forEach(x=>x.textContent=cart.length);const box=document.getElementById('cartItems');if(!box)return;box.innerHTML=cart.length?cart.map(x=>`<div class="cart-item"><div><strong>${x.name}</strong><small>Код ${x.code}</small></div><div style="text-align:right"><strong>${money(x.price)}</strong><br><button class="remove-item" onclick="removeFromCart('${x.code}')">Видалити</button></div></div>`).join(''):'<div class="cart-empty">Ви ще не додали жодної послуги.</div>';document.getElementById('cartTotal').textContent=money(cart.reduce((s,x)=>s+x.price,0));}
+function openCart(){document.getElementById('cartOverlay').classList.add('open');document.body.style.overflow='hidden';renderCart()}
+function closeCart(){document.getElementById('cartOverlay').classList.remove('open');document.body.style.overflow=''}
+const headerLoginButton=document.getElementById('headerLoginButton');
+const loginMenu=document.getElementById('loginMenu');
+function toggleLoginMenu(){const open=!loginMenu.classList.contains('open');loginMenu.classList.toggle('open',open);headerLoginButton.setAttribute('aria-expanded',String(open))}
+function closeLoginMenu(){loginMenu.classList.remove('open');headerLoginButton.setAttribute('aria-expanded','false')}
+function openPatientAccess(){closeLoginMenu();openCart()}
+headerLoginButton?.addEventListener('click',e=>{e.stopPropagation();toggleLoginMenu()});
+document.addEventListener('click',e=>{if(!e.target.closest('.login-menu-wrap'))closeLoginMenu()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLoginMenu()});
+document.getElementById('cartOverlay')?.addEventListener('click',e=>{if(e.target.id==='cartOverlay')closeCart()});
+
+const medicalFiles=document.getElementById('medicalFiles');
+const fileSummary=document.getElementById('fileSummary');
+medicalFiles?.addEventListener('change',()=>{
+  const files=[...medicalFiles.files];
+  fileSummary.textContent=files.length
+    ? `Вибрано файлів: ${files.length} — ${files.map(f=>f.name).join(', ')}`
+    : 'Файли не вибрано';
+});
+
+document.getElementById('requestForm')?.addEventListener('submit',e=>{e.preventDefault();if(!cart.length){alert('Спочатку додайте послугу до заявки.');return}const name=document.getElementById('patientName').value.trim(),phone=document.getElementById('patientPhone').value.trim(),date=document.getElementById('desiredDate').value||'не вказана',ref=document.getElementById('referral').value,comment=document.getElementById('comment').value.trim()||'—';const files=[...(document.getElementById('medicalFiles')?.files||[])];const fileInfo=files.length?files.map(f=>f.name).join(', '):'не додані';const list=cart.map((x,i)=>`${i+1}. ${x.name} — ${money(x.price)}`).join('\n');const total=money(cart.reduce((s,x)=>s+x.price,0));const text=`Заявка на обстеження RadiologyOS\n\nПацієнт: ${name}\nТелефон: ${phone}\nБажана дата: ${date}\nНаправлення: ${ref}\nПопередній висновок: ${fileInfo}\n\nОбрані послуги:\n${list}\n\nОрієнтовна сума: ${total}\nКоментар: ${comment}\n\nПрошу зв’язатися для підтвердження запису.`;window.open(`https://wa.me/${PHONE}?text=${encodeURIComponent(text)}`,'_blank');if(files.length){setTimeout(()=>alert('Чат WhatsApp відкрито. Додайте фото або PDF попереднього висновку до повідомлення вручну.'),500)}});
+renderCart();
+</script>
+</body></html>
