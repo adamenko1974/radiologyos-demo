@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>RadiologyOS — Відділення променевої діагностики</title>
+<meta name="description" content="Відділення променевої діагностики Чернігівського військового госпіталю: КТ, рентгенографія, флюорографія. Безоплатні дослідження для військовослужбовців, онлайн-заявка для цивільних пацієнтів. м. Чернігів, вул. Полуботка, 40."/>
+<meta property="og:title" content="RadiologyOS — Відділення променевої діагностики"/>
+<meta property="og:description" content="КТ, рентгенографія, флюорографія у Чернігові. Запис онлайн."/>
+<meta name="theme-color" content="#152011"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23152011'/%3E%3Cpath d='M26 14h12v12h12v12H38v12H26V38H14V26h12z' fill='%23ead7ad'/%3E%3C/svg%3E"/>
+<style>
+/* ===== Токени ===== */
+:root{
+  --bg:#f5f3ed;--ink:#141712;--muted:#667062;--line:#e0e4da;
+  --gold:#f4c64f;--beige:#ead7ad;
+  --grad:linear-gradient(135deg,#152011,#35432b);
+  --shadow:0 16px 42px rgba(24,34,19,.12);
+}
+
+/* ===== База ===== */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;padding:14px 0 24px;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);line-height:1.45}
+a{text-decoration:none;color:inherit}
+.wrap{width:min(960px,calc(100% - 28px));margin:auto}
+
+/* ===== Шапка ===== */
+header{position:sticky;top:10px;z-index:50;padding:0 14px}
+.header-row{
+  width:min(960px,100%);min-height:92px;margin:0 auto;padding:18px 20px;
+  border-radius:22px;background:var(--grad);box-shadow:var(--shadow);
+  display:flex;align-items:center;gap:18px;color:#fff;
+}
+.brand{display:flex;align-items:center;gap:13px;flex:1;min-width:0}
+.hospital-brand-text{display:flex;flex-direction:column;gap:3px;min-width:0}
+.hospital-brand-title{font-size:clamp(20px,3vw,28px);font-weight:850;line-height:1.08;color:#fff;overflow-wrap:anywhere}
+.hospital-brand-subtitle{font-size:clamp(13px,1.8vw,17px);line-height:1.25;color:#e6eadf;margin-top:5px}
+nav{margin-left:auto;display:flex;align-items:center;gap:12px;flex-shrink:0;font-weight:800;font-size:14px}
+
+/* ===== Меню «Вхід» ===== */
+.login-menu-wrap{position:relative;flex-shrink:0}
+.header-login-button{display:inline-flex;align-items:center;gap:5px;padding:6px 4px;border:0;border-radius:8px;background:transparent;color:rgba(238,242,235,.72);font:inherit;font-size:13px;font-weight:650;cursor:pointer}
+.header-login-button::after{content:'▾';font-size:9px;opacity:.48;transition:transform .18s ease}
+.header-login-button[aria-expanded='true']::after{transform:rotate(180deg)}
+.header-login-button:hover{background:rgba(255,255,255,.045);color:rgba(255,255,255,.9)}
+.header-login-button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.header-login-icon{display:none}
+.login-menu{position:absolute;right:0;top:calc(100% + 10px);width:min(290px,calc(100vw - 28px));min-height:142px;padding:8px;border-radius:16px;background:#f7f8f4;border:1px solid #d7ddd1;box-shadow:0 18px 46px rgba(14,22,11,.24);opacity:0;visibility:hidden;transform:translateY(-6px);transition:.18s;z-index:120}
+.login-menu.open{opacity:1;visibility:visible;transform:translateY(0)}
+.login-choice{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:11px;padding:11px;border-radius:12px;color:#1d2419;border:0;background:transparent;width:100%;font:inherit;text-align:left;cursor:pointer}
+.login-choice + .login-choice{border-top:1px solid #e2e6de}
+.login-choice:hover{background:#f1f3ed}
+.login-choice-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#23301e;color:#fff;font-size:18px}
+.login-choice strong{display:block;font-size:15px}
+.login-choice small{display:block;margin-top:2px;color:#6c7568;font-size:12px}
+.login-choice-arrow{font-size:22px;color:#506148}
+
+/* ===== Картки аудиторій ===== */
+.hero{padding:16px 0 0}
+.photo-audience{display:grid;grid-template-columns:1fr;gap:16px;width:100%}
+.photo-card{
+  display:block;width:100%;border-radius:24px;overflow:hidden;background:#fff;
+  box-shadow:0 16px 42px rgba(24,34,19,.14);
+  transition:transform .18s ease,box-shadow .18s ease;
+}
+.photo-card:hover{transform:translateY(-2px);box-shadow:0 20px 48px rgba(24,34,19,.18)}
+.photo-card:focus-visible{outline:3px solid var(--gold);outline-offset:4px}
+.photo-card img{display:block;width:100%;height:auto;object-fit:cover}
+
+/* ===== Адреса ===== */
+.contact{padding:14px 0 0}
+.contact-card{width:100%;border-radius:22px;padding:22px 24px;background:var(--grad);box-shadow:var(--shadow);color:#fff}
+.address-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:16px;white-space:nowrap}
+.address-row:hover{filter:brightness(1.05)}
+.address-row:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.address-label{font-weight:900;font-size:clamp(16px,2vw,20px)}
+.address-text{font-size:clamp(15px,2vw,19px);overflow:hidden;text-overflow:ellipsis}
+.address-arrow{font-size:30px;line-height:1;opacity:.9}
+
+/* ===== Шухляда «Моя заявка» ===== */
+.eyebrow{text-transform:uppercase;letter-spacing:.13em;font-size:12px;font-weight:900}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 18px;border-radius:14px;font-weight:900}
+.cart-count{min-width:23px;height:23px;padding:0 6px;border-radius:99px;background:var(--gold);display:grid;place-items:center;font-size:12px}
+.cart-overlay{position:fixed;inset:0;background:rgba(8,12,7,.55);z-index:120;opacity:0;pointer-events:none;transition:.2s}
+.cart-overlay.open{opacity:1;pointer-events:auto}
+.cart-drawer{position:absolute;right:0;top:0;height:100%;width:min(520px,100%);background:#f7f5ef;padding:22px;overflow:auto;box-shadow:-20px 0 60px rgba(0,0,0,.22)}
+.cart-head{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.cart-close{border:0;background:#e6e8df;width:42px;height:42px;border-radius:50%;font-size:22px;cursor:pointer}
+.cart-empty{padding:35px 15px;text-align:center;color:var(--muted)}
+.cart-item{display:grid;grid-template-columns:1fr auto;gap:10px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;margin:10px 0}
+.cart-item small{display:block;color:var(--muted)}
+.remove-item{border:0;background:none;color:#9b3b32;cursor:pointer;font-weight:800}
+.cart-total{display:flex;justify-content:space-between;padding:18px 4px;font-size:21px;font-weight:950}
+.cart-note{font-size:12px;color:var(--muted);margin:10px 0}
+.floating-cart{position:fixed;right:18px;bottom:20px;z-index:95;border:0;border-radius:999px;background:var(--beige);color:#1d2419;padding:14px 18px;font-weight:950;box-shadow:0 12px 30px rgba(0,0,0,.2);cursor:pointer}
+.floating-cart .cart-count{display:inline-grid;margin-left:6px}
+
+/* ===== Форма заявки ===== */
+.request-form{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px}
+.request-form h3{margin-top:0}
+.field{margin:11px 0}
+.field label{display:block;font-size:13px;font-weight:800;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:12px;border:1px solid #cfd4c8;border-radius:11px;font:inherit;background:#fff}
+.field textarea{min-height:85px;resize:vertical}
+.send-request{width:100%;border:0;background:#24301e;color:#fff;cursor:pointer}
+.upload-box{border:1.5px dashed #9ca893;border-radius:16px;padding:16px;background:#f7f8f4}
+.upload-title{font-weight:900;margin-bottom:4px}
+.upload-help{font-size:13px;color:var(--muted);margin-bottom:12px}
+.file-input{width:100%;padding:11px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.file-summary{margin-top:10px;font-size:13px;color:#4e5d46}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:#556050}
+.consent input{margin-top:3px;width:18px;height:18px;flex:0 0 18px}
+
+/* ===== Адаптивність ===== */
+@media(min-width:1101px){
+  .header-row,.wrap{width:min(960px,calc(100% - 40px))}
+}
+@media(min-width:701px) and (max-width:1100px){
+  .header-row,.wrap{width:min(92vw,960px)}
+}
+@media(max-width:700px){
+  body{padding-top:10px}
+  header{top:6px;padding:0 10px}
+  .header-row{min-height:80px;padding:14px;border-radius:18px;gap:10px}
+  .hospital-brand-title{font-size:19px}
+  .hospital-brand-subtitle{font-size:12px}
+  .wrap{width:min(100% - 20px,760px)}
+  .photo-audience{gap:12px}
+  .photo-card{border-radius:18px}
+  .contact-card{padding:18px;border-radius:18px}
+  .floating-cart{right:14px;bottom:14px}
+  .cart-drawer{padding:16px}
+}
+@media(max-width:520px){
+  .header-login-button{padding:5px 2px;font-size:12px}
+  .login-menu{right:-2px}
+  .address-row{gap:10px}
+  .contact-card{padding:16px 14px}
+  .address-label{font-size:15px}
+  .address-text{font-size:13px}
+  .address-arrow{font-size:24px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{transition:none!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap header-row">
+    <a class="brand" href="index.html">
+      <div class="hospital-brand-text">
+        <div class="hospital-brand-title">Чернігівський військовий госпіталь</div>
+        <div class="hospital-brand-subtitle">Відділення променевої діагностики</div>
+      </div>
+    </a>
+    <nav>
+      <div class="login-menu-wrap">
+        <button class="header-login-button" id="headerLoginButton" type="button" aria-expanded="false" aria-controls="loginMenu">
+          <span class="header-login-icon" aria-hidden="true">◌</span><span>Вхід</span>
+        </button>
+        <div class="login-menu" id="loginMenu" role="menu">
+          <a class="login-choice" href="./staff.html" role="menuitem">
+            <span class="login-choice-icon" aria-hidden="true">🔐</span>
+            <span><strong>Персонал</strong><small>Заявки, черга та розклад</small></span>
+            <span class="login-choice-arrow" aria-hidden="true">›</span>
+          </a>
+          <button class="login-choice" type="button" onclick="openPatientAccess()" role="menuitem">
+            <span class="login-choice-icon" aria-hidden="true">👤</span>
+            <span><strong>Пацієнт</strong><small>Переглянути або подати заявку</small></span>
+            <span class="login-choice-arrow" aria-hidden="true">›</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div class="photo-audience">
+        <a class="photo-card" href="./military.html" aria-label="Військовослужбовцям — безоплатні дослідження">
+          <img src="military-card.webp" alt="Військовослужбовцям — безоплатні дослідження" width="960" height="460" loading="eager"/>
+        </a>
+        <a class="photo-card" href="./price.html" aria-label="Цивільним пацієнтам — платні дослідження">
+          <img src="civil-card.webp" alt="Цивільним пацієнтам — платні дослідження" width="960" height="430" loading="eager"/>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact" id="contacts">
+    <div class="wrap">
+      <a class="contact-card address-row" href="https://www.google.com/maps/dir/?api=1&amp;destination=51.497850848799%2C31.3094428162464&amp;travelmode=driving" rel="noopener" target="_blank" aria-label="Прокласти маршрут до госпіталю">
+        <span class="address-label">Адреса</span>
+        <span class="address-text">м. Чернігів, вул. Полуботка, 40</span>
+        <span class="address-arrow" aria-hidden="true">›</span>
+      </a>
+    </div>
+  </section>
+</main>
+
+<!-- Шухляда «Моя заявка» -->
+<div aria-hidden="true" class="cart-overlay" id="cartOverlay">
+  <aside aria-label="Моя заявка" aria-modal="true" class="cart-drawer" role="dialog">
+    <div class="cart-head">
+      <div>
+        <div class="eyebrow" style="color:#596b4c">Попередній вибір</div>
+        <h2 style="margin:5px 0">Моя заявка</h2>
+      </div>
+      <button class="cart-close" onclick="closeCart()" type="button" aria-label="Закрити">×</button>
+    </div>
+
+    <div id="cartItems"></div>
+
+    <div class="cart-total"><span>Орієнтовна сума</span><span id="cartTotal">0 грн</span></div>
+
+    <form class="request-form" id="requestForm">
+      <h3>Контактні дані</h3>
+      <div class="field">
+        <label for="patientName">Ім’я та прізвище *</label>
+        <input autocomplete="name" id="patientName" required/>
+      </div>
+      <div class="field">
+        <label for="patientPhone">Номер телефону *</label>
+        <input autocomplete="tel" id="patientPhone" inputmode="tel" placeholder="097 000 00 00" required/>
+      </div>
+      <div class="field">
+        <label for="desiredDate">Бажана дата</label>
+        <input id="desiredDate" type="date"/>
+      </div>
+      <div class="field">
+        <label for="referral">Направлення</label>
+        <select id="referral">
+          <option>Є направлення</option>
+          <option>Направлення ще немає</option>
+          <option>Потрібна консультація</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Попередній письмовий висновок <span style="font-weight:500;color:#788175">(необов’язково)</span></label>
+        <div class="upload-box">
+          <div class="upload-title">📎 Додати попередній висновок</div>
+          <div class="upload-help">Попередній письмовий висновок КТ, МРТ або рентгенографії у форматі фото чи PDF.</div>
+          <input accept="image/*,.pdf" class="file-input" id="medicalFiles" multiple type="file"/>
+          <div class="file-summary" id="fileSummary">Файли не вибрано</div>
+        </div>
+      </div>
+      <label class="consent">
+        <input id="dataConsent" required type="checkbox"/>
+        <span>Погоджуюся на обробку персональних і медичних даних з метою організації діагностичного дослідження.</span>
+      </label>
+      <div class="field">
+        <label for="comment">Коментар</label>
+        <textarea id="comment" placeholder="Зручний час для дзвінка або інша інформація"></textarea>
+      </div>
+      <p class="cart-note"><strong>Важливо:</strong> WhatsApp не прикріплює файл автоматично. Після відкриття чату додайте фото або PDF попереднього висновку до повідомлення вручну. Це не онлайн-оплата і не автоматичне підтвердження запису.</p>
+      <button class="btn send-request" type="submit">Надіслати заявку у WhatsApp</button>
+    </form>
+  </aside>
+</div>
+
+<button class="floating-cart" onclick="openCart()" type="button">Моя заявка <span class="cart-count" data-cart-count="">0</span></button>
+
+<script src="assets/cart.js" defer></script>
+</body>
+</html>
