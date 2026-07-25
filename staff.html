@@ -161,8 +161,15 @@ tr.row-done td{background:#fafafa;color:#6b716c}
     <h1 style="margin:0 0 4px;font-size:20px">Вхід для персоналу</h1>
     <p style="margin:0 0 16px;font-size:13px;color:#667062">RadiologyOS · робота із заявками, розкладом і прайсом</p>
     <form id="authForm">
-      <input type="password" id="authPass" placeholder="Пароль" autocomplete="current-password" required
-        style="width:100%;padding:13px;border:1px solid #cfd4c8;border-radius:12px;font:inherit;box-sizing:border-box">
+      <div style="position:relative">
+        <input type="password" id="authPass" placeholder="Пароль" autocomplete="current-password" required
+          style="width:100%;padding:13px 46px 13px 13px;border:1px solid #cfd4c8;border-radius:12px;font:inherit;box-sizing:border-box">
+        <button type="button" id="authPassEye" aria-label="Показати пароль" onclick="togglePassEye()"
+          style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;border-radius:9px;background:transparent;cursor:pointer;color:#6c7562;display:grid;place-items:center">
+          <svg id="eyeOpen" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg id="eyeClosed" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" style="display:none"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/></svg>
+        </button>
+      </div>
       <p id="authError" style="display:none;color:#9b3b32;font-size:13px;margin:8px 0 0">Невірний пароль</p>
       <button style="width:100%;margin-top:12px;min-height:48px;border:0;border-radius:12px;background:#556349;color:#fff;font:inherit;font-weight:800;cursor:pointer">Увійти</button>
     </form>
@@ -403,6 +410,16 @@ tr.row-done td{background:#fafafa;color:#6b716c}
 /* --- Вхід для персоналу ---
    Пароль зберігається у вигляді SHA-256-хешу. Це захист від випадкових
    відвідувачів; на статичному хостингу він не є криптографічно надійним. */
+
+function togglePassEye(){
+  const p=document.getElementById('authPass');
+  const show=p.type==='password';
+  p.type=show?'text':'password';
+  document.getElementById('eyeOpen').style.display=show?'none':'block';
+  document.getElementById('eyeClosed').style.display=show?'block':'none';
+  p.focus();
+}
+
 const AUTH_HASH_STORE='radiologyos_staff_pass_v1';
 const DEFAULT_PASS_HASH='64f810c626c18d87f57e25f8135c229c3168e554f060f4f2024a1001183b09bd';
 async function sha256(t){
