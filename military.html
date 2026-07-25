@@ -266,12 +266,12 @@ header .brand{flex:1;min-width:0}
 <div class="military-notice-card">
 <div>
 <div class="eyebrow">Військовослужбовцям</div>
-<h1>Дослідження для військовослужбовців</h1>
-<p>За направленням лікаря та відповідно до чинного законодавства України.</p>
+<h1 id="scMilPageTitle">Дослідження для військовослужбовців</h1>
+<p id="scMilPageSub">За направленням лікаря та відповідно до чинного законодавства України.</p>
 </div>
 </div>
 </div>
-</section><div class="wrap"><div class="price-intro"><strong>Оберіть потрібний розділ.</strong> Для військовослужбовців дослідження виконуються безоплатно за направленням та відповідно до законодавства України.</div><div class="section-head"><div><div class="eyebrow" style="color:#596b4c">Офіційний перелік досліджень</div><p class="lead" style="margin-top:8px">Відділення променевої діагностики Чернігівського військового госпіталю військової частини А3120.</p></div></div>
+</section><div class="wrap"><div class="price-intro" id="scMilNotice"><strong>Оберіть потрібний розділ.</strong> Для військовослужбовців дослідження виконуються безоплатно за направленням та відповідно до законодавства України.</div><div class="section-head"><div><div class="eyebrow" style="color:#596b4c">Офіційний перелік досліджень</div><p class="lead" style="margin-top:8px" id="scMilLead">Відділення променевої діагностики Чернігівського військового госпіталю військової частини А3120.</p></div></div>
 <section class="price-group open"><h2>1. Цифрова флюорографія</h2><table><thead><tr><th>Код</th><th>Дослідження та що входить</th></tr></thead><tbody><tr>
 <td class="code">101</td>
 <td>
@@ -602,7 +602,22 @@ function milCopyText() {
 }
 
 renderMilitaryCart();
-</script><script src="assets/notify.js"></script>
+</script><script src="assets/department.js"></script>
+<script>
+(function(){
+  try{
+    if(!localStorage.getItem(SITECONTENT_STORE)) return;
+    const c=getSiteContent();
+    const set=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.textContent=v};
+    set('scMilPageTitle',c.milPageTitle); set('scMilPageSub',c.milPageSub);
+    set('scMilNotice',c.milNotice); set('scMilLead',c.milLead);
+    /* шапка спільна */
+    document.querySelectorAll('.hospital-brand-title').forEach(el=>{if(c.brandTitle)el.textContent=c.brandTitle});
+    document.querySelectorAll('.hospital-brand-subtitle').forEach(el=>{if(c.brandSubtitle)el.textContent=c.brandSubtitle});
+  }catch(e){}
+})();
+</script>
+<script src="assets/notify.js"></script>
 <script>
 const _mdd=document.getElementById('militaryDesiredDate');
 if(_mdd)_mdd.min=new Date().toISOString().slice(0,10);

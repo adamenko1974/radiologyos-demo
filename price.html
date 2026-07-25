@@ -176,11 +176,11 @@ header .brand{flex:1;min-width:0}
 <section class="civilian-heading"><div class="wrap">
 <div class="civilian-heading-card">
 <div><div class="eyebrow" style="color:#596b4c">Цивільним особам</div>
-<h1>Платні дослідження</h1>
-<p>Вартість указана відповідно до чинних тарифів.</p></div>
+<h1 id="scPriceTitle">Платні дослідження</h1>
+<p id="scPriceSub">Вартість указана відповідно до чинних тарифів.</p></div>
 </div>
 </div></section>
-<div class="wrap"><div class="price-intro"><strong>Цивільним особам — платні послуги.</strong> Оберіть потрібне дослідження, натисніть «Записатися» та введіть свої дані. Після опрацювання заявки з вами зв’яжуться і повідомлять дату та час проведення дослідження.</div><div class="section-head"><div><div class="eyebrow" style="color:#596b4c">Офіційний перелік</div><h1 style="color:var(--ink);font-size:48px;margin:10px 0">Тарифи на платні медичні послуги</h1><p class="lead">Відділення променевої діагностики Чернігівського військового госпіталю військової частини А3120.</p></div></div>
+<div class="wrap"><div class="price-intro" id="scPriceIntro"><strong>Цивільним особам — платні послуги.</strong> Оберіть потрібне дослідження, натисніть «Записатися» та введіть свої дані. Після опрацювання заявки з вами зв’яжуться і повідомлять дату та час проведення дослідження.</div><div class="section-head"><div><div class="eyebrow" style="color:#596b4c">Офіційний перелік</div><h1 style="color:var(--ink);margin:10px 0" id="scPriceListTitle">Тарифи на платні медичні послуги</h1><p class="lead" id="scPriceLead">Відділення променевої діагностики Чернігівського військового госпіталю військової частини А3120.</p></div></div>
 <div id="priceGroups">
     <section class="price-group open">
       <h2>1. Цифрова флюорографія</h2>
@@ -508,6 +508,21 @@ header .brand{flex:1;min-width:0}
       <a class="btn send-request" href="cabinet.html" style="margin-bottom:8px;background:#eef1e9;color:#3c4a30">Особистий кабінет</a>
       <button class="btn send-request" type="button" onclick="closeCart()" style="background:#fff;border:1px solid #cfd4c8;color:#3c4a30">Готово</button>
     </div></aside></div><button class="floating-cart" onclick="openCart()" type="button">Моя заявка <span class="cart-count" data-cart-count="">0</span></button>
+<script src="assets/department.js"></script>
+<script>
+(function(){
+  try{
+    if(!localStorage.getItem(SITECONTENT_STORE)) return;
+    const c=getSiteContent();
+    const set=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.textContent=v};
+    set('scPriceTitle',c.pricePageTitle); set('scPriceSub',c.pricePageSub);
+    set('scPriceIntro',c.priceIntro); set('scPriceListTitle',c.priceListTitle); set('scPriceLead',c.priceLead);
+    /* шапка спільна */
+    document.querySelectorAll('.hospital-brand-title').forEach(el=>{if(c.brandTitle)el.textContent=c.brandTitle});
+    document.querySelectorAll('.hospital-brand-subtitle').forEach(el=>{if(c.brandSubtitle)el.textContent=c.brandSubtitle});
+  }catch(e){}
+})();
+</script>
 <script src="assets/pricelist.js"></script>
 <script>
 /* Стандартний прайс уже в HTML (для пошуковиків і роботи без JS).

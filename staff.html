@@ -277,6 +277,15 @@ tr.row-done td{background:#fafafa;color:#6b716c}
       </div>
       <div class="panel queue">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <h2 style="margin:0">Головна сторінка</h2>
+          <button class="btn" onclick="resetSiteEditor()">Скинути</button>
+        </div>
+        <p style="color:#667062;font-size:13px">Тексти шапки та головних блоків на сторінках сайту: головна, платні дослідження, військовослужбовцям.</p>
+        <div id="siteEditor"></div>
+        <p id="siteMsg" style="color:#2f5c2a;font-size:13px;display:none">✓ Збережено</p>
+      </div>
+      <div class="panel queue">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
           <h2 style="margin:0">Обладнання</h2>
           <div style="display:flex;gap:8px">
             <button class="btn" onclick="addEquip()">+ Обладнання</button>
@@ -940,6 +949,48 @@ async function initAdminPicker(){
   box.innerHTML='';box.append(sel,btn);
 }
 initAdminPicker();
+
+
+/* --- Редактор головної сторінки --- */
+let siteData=getSiteContent();
+const SITE_FIELDS=[
+  ['__hdr','Шапка (всі сторінки)'],
+  ['brandTitle','Назва закладу'],
+  ['brandSubtitle','Підзаголовок'],
+  ['__hdr','Головна сторінка'],
+  ['milTitle','Картка військових — заголовок'],
+  ['milSub','Картка військових — підпис'],
+  ['civTitle','Картка цивільних — заголовок'],
+  ['civSub','Картка цивільних — підпис'],
+  ['phone','Телефон реєстратури'],
+  ['address','Адреса'],
+  ['__hdr','Сторінка «Платні дослідження»'],
+  ['pricePageTitle','Заголовок сторінки'],
+  ['pricePageSub','Підзаголовок'],
+  ['priceIntro','Пояснення для пацієнтів','area'],
+  ['priceListTitle','Заголовок переліку'],
+  ['priceLead','Підпис під заголовком','area'],
+  ['__hdr','Сторінка «Військовослужбовцям»'],
+  ['milPageTitle','Заголовок сторінки'],
+  ['milPageSub','Підзаголовок'],
+  ['milNotice','Пояснення для пацієнтів','area'],
+  ['milLead','Підпис під переліком','area'],
+];
+function renderSiteEditor(){
+  const inp='width:100%;padding:9px;border:1px solid #cfd4c8;border-radius:9px;font:inherit';
+  document.getElementById('siteEditor').innerHTML=SITE_FIELDS.map(([k,label,kind])=>{
+    if(k==='__hdr') return `<div style="font-weight:800;font-size:13px;color:#4f5d3e;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em">${label}</div>`;
+    const v=esc(siteData[k]||'');
+    return `<div class="field" style="margin:9px 0">
+     <label style="font-size:12px;font-weight:700">${label}</label>
+     ${kind==='area'
+       ? `<textarea rows="2" onchange="siteData['${k}']=this.value;saveSiteContent(siteData);siteSaved()" style="${inp};resize:vertical">${v}</textarea>`
+       : `<input value="${v}" onchange="siteData['${k}']=this.value;saveSiteContent(siteData);siteSaved()" style="${inp}">`}
+   </div>`;}).join('');
+}
+function siteSaved(){const m=document.getElementById('siteMsg');m.style.display='block';setTimeout(()=>m.style.display='none',1500)}
+function resetSiteEditor(){if(confirm('Повернути стандартні тексти головної?')){resetSiteContent();siteData=getSiteContent();renderSiteEditor()}}
+renderSiteEditor();
 
 autoScheduleNew();
 render();

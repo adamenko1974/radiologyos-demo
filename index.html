@@ -193,8 +193,8 @@ nav{margin-left:auto;display:flex;align-items:center;gap:12px;flex-shrink:0;font
   <div class="wrap header-row">
     <a class="brand" href="index.html">
       <div class="hospital-brand-text">
-        <div class="hospital-brand-title">Чернігівський військовий госпіталь</div>
-        <div class="hospital-brand-subtitle">Відділення променевої діагностики</div>
+        <div class="hospital-brand-title" id="scBrandTitle">Чернігівський військовий госпіталь</div>
+        <div class="hospital-brand-subtitle" id="scBrandSubtitle">Відділення променевої діагностики</div>
       </div>
     </a>
     <nav>
@@ -226,16 +226,16 @@ nav{margin-left:auto;display:flex;align-items:center;gap:12px;flex-shrink:0;font
         <a class="promo-card promo-military" href="./military.html">
           <span class="promo-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3 8.6-7 10-4-1.4-7-5.4-7-10V6l7-3z"/></svg></span>
           <span class="promo-text">
-            <strong>Військовослужбовцям</strong>
-            <span>Безоплатні дослідження за направленням</span>
+            <strong id="scMilTitle">Військовослужбовцям</strong>
+            <span id="scMilSub">Безоплатні дослідження за направленням</span>
           </span>
           <span class="promo-arrow" aria-hidden="true">›</span>
         </a>
         <a class="promo-card promo-civil" href="./price.html">
           <span class="promo-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M9.5 4h5v5.5H20v5h-5.5V20h-5v-5.5H4v-5h5.5V4z"/></svg></span>
           <span class="promo-text">
-            <strong>Цивільним особам</strong>
-            <span>Платні дослідження — повний прайс і запис</span>
+            <strong id="scCivTitle">Цивільним особам</strong>
+            <span id="scCivSub">Платні дослідження — повний прайс і запис</span>
           </span>
           <span class="promo-arrow" aria-hidden="true">›</span>
         </a>
@@ -247,12 +247,12 @@ nav{margin-left:auto;display:flex;align-items:center;gap:12px;flex-shrink:0;font
     <div class="wrap">
       <a class="contact-card address-row" href="tel:+380972808899" aria-label="Зателефонувати в реєстратуру" style="margin-bottom:14px">
         <span class="address-label">Телефон</span>
-        <span class="address-text">+380 97 280 88 99</span>
+        <span class="address-text" id="scPhone">+380 97 280 88 99</span>
         <span class="address-arrow" aria-hidden="true">›</span>
       </a>
       <a class="contact-card address-row" href="https://www.google.com/maps/dir/?api=1&amp;destination=51.497850848799%2C31.3094428162464&amp;travelmode=driving" rel="noopener" target="_blank" aria-label="Прокласти маршрут до госпіталю">
         <span class="address-label">Адреса</span>
-        <span class="address-text">м. Чернігів, вул. Полуботка, 40</span>
+        <span class="address-text" id="scAddress">м. Чернігів, вул. Полуботка, 40</span>
         <span class="address-arrow" aria-hidden="true">›</span>
       </a>
     </div>
@@ -368,6 +368,23 @@ nav{margin-left:auto;display:flex;align-items:center;gap:12px;flex-shrink:0;font
 
 <button class="floating-cart" onclick="openCart()" type="button">Моя заявка <span class="cart-count" data-cart-count="">0</span></button>
 
+<script src="assets/department.js"></script>
+<script>
+/* Застосовуємо збережені редагування головної (якщо персонал щось змінив) */
+(function(){
+  try{
+    if(!localStorage.getItem(SITECONTENT_STORE)) return; /* стандартний HTML і так актуальний */
+    const c=getSiteContent();
+    const set=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.textContent=v};
+    set('scBrandTitle',c.brandTitle); set('scBrandSubtitle',c.brandSubtitle);
+    set('scMilTitle',c.milTitle);     set('scMilSub',c.milSub);
+    set('scCivTitle',c.civTitle);     set('scCivSub',c.civSub);
+    set('scAddress',c.address);
+    const ph=document.getElementById('scPhone');
+    if(ph&&c.phone){ph.textContent=c.phone;ph.closest('a').href='tel:'+c.phone.replace(/[^+\d]/g,'');}
+  }catch(e){}
+})();
+</script>
 <script src="assets/notify.js"></script>
 <script src="assets/cart.js" defer></script>
 </body>
