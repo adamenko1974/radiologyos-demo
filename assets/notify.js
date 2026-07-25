@@ -31,7 +31,8 @@ function syncPushUpdate(app) {
         action: 'update', token: SYNC_TOKEN, id: app.sid || app.id,
         status: app.status,
         appointmentDate: app.appointmentDate || '',
-        appointmentTime: app.appointmentTime || ''
+        appointmentTime: app.appointmentTime || '',
+        apparatus: (typeof appOf === 'function') ? appOf(app) : (app.apparatus || '')
       })
     });
   } catch (e) {}
@@ -61,6 +62,25 @@ function syncSetAdmin(email) {
       method: 'POST', mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'setAdmin', token: SYNC_TOKEN, email })
+    });
+  } catch (e) {}
+}
+
+async function syncFetchBusy() {
+  if (!NOTIFY_ENDPOINT) return null;
+  try {
+    const r = await fetch(NOTIFY_ENDPOINT + '?action=busy&token=' + encodeURIComponent(SYNC_TOKEN));
+    return await r.json();
+  } catch (e) { return null; }
+}
+
+function syncSetHours(hours) {
+  if (!NOTIFY_ENDPOINT) return;
+  try {
+    fetch(NOTIFY_ENDPOINT, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'setHours', token: SYNC_TOKEN, hours })
     });
   } catch (e) {}
 }

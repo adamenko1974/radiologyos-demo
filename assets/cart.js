@@ -15,6 +15,7 @@ function saveCart() {
 }
 
 function addToCart(code, name, price) {
+  _lastPickerApp = null;
   if (!cart.some(x => x.code === String(code))) {
     cart.push({ code: String(code), name, price: Number(price) });
     saveCart();
@@ -94,7 +95,7 @@ medicalFiles?.addEventListener('change', () => {
 
 const STAFF_STORE = 'radiologyos_applications_v1';
 
-function pushToStaffPanel({ name, phone, category, studies, desiredDate, comment, sid }) {
+function pushToStaffPanel({ name, phone, category, studies, desiredDate, desiredTime, apparatus, comment, sid }) {
   try {
     const apps = JSON.parse(localStorage.getItem(STAFF_STORE) || '[]');
     const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2));
@@ -107,7 +108,9 @@ function pushToStaffPanel({ name, phone, category, studies, desiredDate, comment
         status: 'new',
         comment: comment || '',
         createdAt: new Date().toISOString(),
-        sid: sid || ''
+        sid: sid || '',
+        desiredTime: desiredTime || '',
+        apparatus: apparatus || (typeof apparatusForStudyTitle === 'function' ? apparatusForStudyTitle(study) : 'xray')
       });
     });
     localStorage.setItem(STAFF_STORE, JSON.stringify(apps));
@@ -118,6 +121,37 @@ function pushToStaffPanel({ name, phone, category, studies, desiredDate, comment
 
 const requestForm = document.getElementById('requestForm');
 let lastRequestText = '';
+let pickedSlot = { date: '', time: '' };
+
+/* Апарат за вмістом кошика: якщо є хоч одне КТ — КТ, інакше рентген */
+function cartApparatus() {
+  if (typeof apparatusForCode !== 'function') return 'xray';
+  return cart.some(x => apparatusForCode(x.code) === 'ct') ? 'ct' : 'xray';
+}
+
+let _lastPickerApp = null;
+function refreshSlotPicker() {
+  const box = document.getElementById('slotPicker');
+  if (!box || typeof initSlotPicker !== 'function') return;
+  if (!cart.length) {
+    box.innerHTML = '<div class="sp-loading">Оберіть послугу — і тут з’явиться вільний час</div>';
+    _lastPickerApp = null;
+    return;
+  }
+  const app = cartApparatus();
+  if (app === _lastPickerApp) return;
+  _lastPickerApp = app;
+  pickedSlot = { date: '', time: '' };
+  initSlotPicker({
+    container: box,
+    apparatus: app,
+    onPick: s => {
+      pickedSlot = s;
+      const dd = document.getElementById('desiredDate');
+      if (dd && s.date) dd.value = s.date;
+    }
+  });
+}
 
 requestForm?.addEventListener('submit', e => {
   e.preventDefault();
@@ -131,8 +165,8 @@ requestForm?.addEventListener('submit', e => {
 
   const name = document.getElementById('patientName').value.trim();
   const phone = '+380' + document.getElementById('patientPhone').value.replace(/\D/g, '');
-  const dateISO = document.getElementById('desiredDate').value;
-  const time = document.getElementById('desiredTime').value || 'будь-який';
+  const dateISO = pickedSlot.date || document.getElementById('desiredDate').value;
+  const time = pickedSlot.time || document.getElementById('desiredTime').value || 'будь-який';
   const ref = document.getElementById('referral').value;
   const comment = document.getElementById('comment').value.trim() || '—';
   const files = [...(document.getElementById('medicalFiles')?.files || [])];
@@ -140,7 +174,7 @@ requestForm?.addEventListener('submit', e => {
 
   const list = cart.map((x, i) => `${i + 1}. ${x.name} — ${money(x.price)}`).join('\n');
   const total = money(cart.reduce((s, x) => s + x.price, 0));
-  lastRequestText = `Заявка на обстеження\n\nПацієнт: ${name}\nТелефон: ${phone}\nБажана дата: ${dateISO || 'не вказана'}\nЗручний час: ${time}\nНаправлення: ${ref}\nПопередній висновок: ${fileInfo}\n\nОбрані послуги:\n${list}\n\nОрієнтовна сума: ${total}\nКоментар: ${comment}\n\nПрошу зв'язатися для підтвердження запису.`;
+  lastRequestText = `Заявка на обстеження\n\nПацієнт: ${name}\nТелефон: ${phone}\nБажана дата: ${dateISO || 'не вказана'}\nЗручний час: ${pickedSlot.time ? pickedSlot.time + ' (обрано з розкладу)' : time}\nНаправлення: ${ref}\nПопередній висновок: ${fileInfo}\n\nОбрані послуги:\n${list}\n\nОрієнтовна сума: ${total}\nКоментар: ${comment}\n\nПрошу зв'язатися для підтвердження запису.`;
 
   const sid = (crypto.randomUUID ? crypto.randomUUID() : 'sid-' + Date.now());
   const commentFull = [ref, time !== 'будь-який' ? 'Зручний час: ' + time : '', comment !== '—' ? comment : ''].filter(Boolean).join('. ');
@@ -150,6 +184,8 @@ requestForm?.addEventListener('submit', e => {
     category: 'Цивільна особа',
     studies: cart.map(x => x.name),
     desiredDate: dateISO,
+    desiredTime: pickedSlot.time || '',
+    apparatus: cartApparatus(),
     comment: commentFull,
     sid
   });
@@ -159,7 +195,8 @@ requestForm?.addEventListener('submit', e => {
     category: 'Цивільна особа',
     studies: cart.map(x => x.name).join('; '),
     desiredDate: dateISO,
-    comment: commentFull
+    apparatus: cartApparatus(),
+    comment: [pickedSlot.time ? 'Обраний час: ' + pickedSlot.time : '', commentFull].filter(Boolean).join('. ')
   });
 
   showSuccess(files.length > 0);
@@ -223,6 +260,7 @@ openCart = function () {
     if (items) items.style.display = '';
   }
   _openCart();
+  refreshSlotPicker();
 };
 
 const _dd = document.getElementById('desiredDate');

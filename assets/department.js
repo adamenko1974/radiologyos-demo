@@ -97,3 +97,43 @@ function getSiteContent() {
 }
 function saveSiteContent(c) { localStorage.setItem(SITECONTENT_STORE, JSON.stringify(c)); }
 function resetSiteContent() { localStorage.removeItem(SITECONTENT_STORE); }
+
+/* --- Апарати відділення ---
+   КТ: слоти по 30 хв. Рентген (рентгенографія, флюорографія, скопія): по 15 хв.
+   Прив'язка дослідження до апарата — за першою цифрою коду послуги. */
+const APPARATUS = [
+  { id: 'xray', name: 'Рентген', step: 15, codePrefixes: ['1', '2', '3'] },
+  { id: 'ct',   name: 'КТ',      step: 30, codePrefixes: ['4', '5', '6'] }
+];
+
+function apparatusForCode(code) {
+  const p = String(code || '').trim()[0];
+  return (APPARATUS.find(a => a.codePrefixes.includes(p)) || APPARATUS[0]).id;
+}
+
+function apparatusById(id) {
+  return APPARATUS.find(a => a.id === id) || APPARATUS[0];
+}
+
+/* Пошук апарата за назвою дослідження (для записів без коду) */
+function apparatusForStudyTitle(title) {
+  try {
+    if (typeof getPricelist === 'function') {
+      for (const g of getPricelist())
+        for (const it of g.items)
+          if (it.title === title) return apparatusForCode(it.code);
+    }
+  } catch (e) {}
+  return 'xray';
+}
+
+/* Часи слотів для апарата в межах робочих годин */
+function slotTimesFor(appId, workHours) {
+  const step = apparatusById(appId).step;
+  const toMins = t => { const [a, b] = t.split(':').map(Number); return a * 60 + b; };
+  const pad = n => String(n).padStart(2, '0');
+  const out = [];
+  for (let m = toMins(workHours.start); m < toMins(workHours.end); m += step)
+    out.push(pad(Math.floor(m / 60)) + ':' + pad(m % 60));
+  return out;
+}
