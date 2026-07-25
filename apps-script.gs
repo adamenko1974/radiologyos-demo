@@ -53,6 +53,7 @@ function doPost(e) {
     if (data.action === 'update') return handleUpdate_(data);
     if (data.action === 'setAdmin') return handleSetAdmin_(data);
     if (data.action === 'setHours') return handleSetHours_(data);
+    if (data.action === 'setApparatus') return handleSetApparatus_(data);
     return handleSubmit_(data);
   } catch (err) {
     return ContentService.createTextOutput('error');
@@ -119,6 +120,12 @@ function handleSetHours_(data) {
   return ContentService.createTextOutput('ok');
 }
 
+function handleSetApparatus_(data) {
+  if (data.token !== SYNC_TOKEN) return ContentService.createTextOutput('denied');
+  PropertiesService.getScriptProperties().setProperty('apparatus_avail', JSON.stringify(data.availability || {}));
+  return ContentService.createTextOutput('ok');
+}
+
 function doGet(e) {
   if (!e.parameter || e.parameter.token !== SYNC_TOKEN) {
     return ContentService.createTextOutput('denied');
@@ -140,7 +147,9 @@ function doGet(e) {
         });
       }
     }
-    return ContentService.createTextOutput(JSON.stringify({ hours: hours, busy: busy }))
+    var availRaw = PropertiesService.getScriptProperties().getProperty('apparatus_avail');
+    var avail = availRaw ? JSON.parse(availRaw) : null;
+    return ContentService.createTextOutput(JSON.stringify({ hours: hours, busy: busy, availability: avail }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 
