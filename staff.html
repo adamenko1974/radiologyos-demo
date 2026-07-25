@@ -135,6 +135,24 @@ tr.row-done td{background:#fafafa;color:#6b716c}
 .notify-channel.viber{background:#eee7fb;color:#5b3b91}
 .notify-preview{background:#f7f8f5;border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:14px;white-space:pre-wrap}
 
+
+/* Тижнева сітка */
+.week-grid{display:grid;grid-template-columns:56px repeat(7,minmax(120px,1fr));gap:3px;min-width:920px}
+.calendar-grid-wrap{overflow-x:auto}
+.wg-head{position:sticky;top:0;background:var(--card);padding:8px 4px;text-align:center;font-weight:700;font-size:13px;border-radius:8px;z-index:2}
+.wg-head small{display:block;font-weight:400;color:#7c857a;font-size:11px}
+.wg-head.today{background:#eef2eb;color:var(--green)}
+.wg-time{font-size:11px;color:#8a927f;text-align:right;padding:6px 6px 0 0}
+.wg-cell{position:relative;min-height:40px;border-radius:8px;padding:5px 6px;font-size:11.5px;line-height:1.25}
+.wg-cell.off{background:#efefec;color:#a8ada3}
+.wg-cell.work{background:#fff;border:1px solid #e3e7de;cursor:pointer}
+.wg-cell.work:hover{border-color:#95a487;background:#fbfcf9}
+.wg-cell.busy{background:linear-gradient(135deg,#4f5d3e,#6c7c59);color:#fff;cursor:pointer}
+.wg-cell.busy small{color:#dfe5d6;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wg-cell.busy strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.wg-toggle{position:absolute;top:3px;right:3px;width:18px;height:18px;border:0;border-radius:6px;background:rgba(0,0,0,.06);color:#7c857a;font-size:10px;line-height:1;cursor:pointer;opacity:0;transition:.12s}
+.wg-cell:hover .wg-toggle{opacity:1}
+.wg-cell.off .wg-toggle{opacity:.6}
 </style>
 </head>
 <body>
@@ -169,6 +187,7 @@ tr.row-done td{background:#fafafa;color:#6b716c}
     <button class="nav-btn" data-view="pricelist">Прайс</button>
     <button class="nav-btn" data-view="department">Відділення</button>
     <button class="nav-btn" data-view="settings">Налаштування</button>
+    <button class="nav-btn" id="syncBtn" onclick="syncPull(true)" style="color:#4f5d3e">↻ Оновити з таблиці</button>
   </aside>
 
   <main class="content">
@@ -209,13 +228,13 @@ tr.row-done td{background:#fafafa;color:#6b716c}
       <div class="panel calendar-panel">
         <div class="calendar-head">
           <div>
-            <h2>Розклад кабінету</h2>
-            <p>Крок — 30 хвилин. Робочі інтервали можна вмикати та вимикати натисканням.</p>
+            <h2>Розклад кабінету — тиждень</h2>
+            <p>Клік по вільній клітинці — записати пацієнта. Кнопка ◐ у клітинці — зробити час робочим/неробочим.</p>
           </div>
           <div class="calendar-controls">
-            <button class="btn" id="prevDay">←</button>
+            <button class="btn" id="prevDay" title="Попередній тиждень">←</button>
             <input type="date" id="calendarDate">
-            <button class="btn" id="nextDay">→</button>
+            <button class="btn" id="nextDay" title="Наступний тиждень">→</button>
             <button class="btn btn-primary" id="addFromCalendar">+ Запис</button>
           </div>
         </div>
@@ -324,6 +343,7 @@ tr.row-done td{background:#fafafa;color:#6b716c}
 
 <script src="assets/pricelist.js"></script>
 <script src="assets/department.js"></script>
+<script src="assets/notify.js"></script>
 <script>
 
 /* --- Вхід для персоналу ---
@@ -424,6 +444,7 @@ function autoScheduleNew(){
       a.appointmentTime=slot.time;
       a.status='booked';
       changed=true;
+      if(typeof syncPushUpdate==='function') syncPushUpdate(a);
     }
   });
   if(changed) save();
@@ -434,6 +455,7 @@ function quickBook(id){
   const slot=findNearestSlot(id);
   if(!slot){alert('Вільного робочого часу не знайдено.');return;}
   a.status='booked';
+  if(typeof syncPushUpdate==='function') syncPushUpdate(a);
   a.appointmentDate=slot.date;
   a.appointmentTime=slot.time;
   render();
@@ -606,26 +628,39 @@ function slotState(date,time){
   const work = time in settings ? settings[time] : defaultWorkFor(time);
   return {type:work?'work':'off'};
 }
+function weekStartOf(dateStr){
+  const d=new Date((dateStr||new Date().toISOString().slice(0,10))+'T00:00:00');
+  const shift=(d.getDay()+6)%7; /* понеділок */
+  d.setDate(d.getDate()-shift);
+  return d;
+}
 function renderCalendar(){
-  const date=calendarDate.value||new Date().toISOString().slice(0,10);
-  calendarGrid.innerHTML=generateTimes().map(time=>{
-    const state=slotState(date,time);
-    if(state.type==='busy'){
-      const a=state.app;
-      return `<div class="time-row" data-app-id="${a.id}"><div class="time-label">${time}</div><div class="slot busy">
-        <div><div class="slot-title">${esc(a.name)}</div><small>${esc(a.study)} · ${esc(a.phone)}</small></div>
-        <div class="slot-actions"><button class="slot-btn edit" onclick="editApp('${a.id}')">Відкрити</button></div>
-      </div></div>`;
+  const anchor=calendarDate.value||new Date().toISOString().slice(0,10);
+  const start=weekStartOf(anchor);
+  const days=[...Array(7)].map((_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d.toISOString().slice(0,10)});
+  const dayNames=['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
+  const today=new Date().toISOString().slice(0,10);
+  let html='<div class="week-grid"><div></div>'+days.map((d,i)=>
+    `<div class="wg-head${d===today?' today':''}">${dayNames[i]}<small>${d.slice(8,10)}.${d.slice(5,7)}</small></div>`).join('');
+  for(const time of generateTimes()){
+    html+=`<div class="wg-time">${time}</div>`;
+    for(const date of days){
+      const st=slotState(date,time);
+      if(st.type==='busy'){
+        const a=st.app;
+        html+=`<div class="wg-cell busy" data-app-id="${a.id}" onclick="editApp('${a.id}')" title="${esc(a.name)} — ${esc(a.study)}">
+          <strong>${esc(a.name)}</strong><small>${esc(a.study)}</small></div>`;
+      }else if(st.type==='work'){
+        html+=`<div class="wg-cell work" onclick="bookSlot('${date}','${time}')" title="Записати пацієнта на ${date} ${time}">
+          <button class="wg-toggle" title="Зробити неробочим" onclick="event.stopPropagation();toggleWork('${date}','${time}')">◐</button></div>`;
+      }else{
+        html+=`<div class="wg-cell off" title="Неробочий час">
+          <button class="wg-toggle" title="Зробити робочим" onclick="toggleWork('${date}','${time}')">◐</button></div>`;
+      }
     }
-    const label=state.type==='work'?'Вільний робочий час':'Неробочий час';
-    return `<div class="time-row"><div class="time-label">${time}</div><div class="slot ${state.type}">
-      <div><div class="slot-title">${label}</div><small>${state.type==='work'?'Можна записати пацієнта':'Натисніть, щоб зробити робочим'}</small></div>
-      <div class="slot-actions">
-        <button class="slot-btn toggle" onclick="toggleWork('${date}','${time}')">${state.type==='work'?'Зробити неробочим':'Зробити робочим'}</button>
-        <button class="slot-btn book" onclick="bookSlot('${date}','${time}')">Записати</button>
-      </div>
-    </div></div>`;
-  }).join('');
+  }
+  html+='</div>';
+  calendarGrid.innerHTML=html;
 }
 function toggleWork(date,time){
   const settings=getDaySettings(date);
@@ -643,11 +678,11 @@ function bookSlot(date,time){
 }
 calendarDate.value=new Date().toISOString().slice(0,10);
 prevDay.addEventListener('click',()=>{
-  const d=new Date(calendarDate.value+'T12:00:00');d.setDate(d.getDate()-1);
+  const d=new Date(calendarDate.value+'T12:00:00');d.setDate(d.getDate()-7);
   calendarDate.value=d.toISOString().slice(0,10);renderCalendar();
 });
 nextDay.addEventListener('click',()=>{
-  const d=new Date(calendarDate.value+'T12:00:00');d.setDate(d.getDate()+1);
+  const d=new Date(calendarDate.value+'T12:00:00');d.setDate(d.getDate()+7);
   calendarDate.value=d.toISOString().slice(0,10);renderCalendar();
 });
 calendarDate.addEventListener('change',renderCalendar);
@@ -688,6 +723,7 @@ document.getElementById('protocolForm').addEventListener('submit',e=>{
   };
   localStorage.setItem('radiologyos_last_doctor',a.protocol.doctor);
   a.status='done';
+  if(typeof syncPushUpdate==='function') syncPushUpdate(a);
   closeProtocol(); render(); renderCalendar();
 });
 
@@ -780,6 +816,46 @@ async function changePass(){
   document.getElementById('passOld').value=document.getElementById('passNew').value='';
   msg.textContent='✓ Пароль змінено';msg.style.color='#2f5c2a';msg.style.display='block';
 }
+
+
+/* --- Синхронізація з Google Таблицею ---
+   Тягне заявки, подані з будь-якого пристрою; повертає статуси і час запису.
+   Працює, лише коли в assets/notify.js вказано NOTIFY_ENDPOINT і SYNC_TOKEN. */
+async function syncPull(manual){
+  if(typeof syncFetchList!=='function') return;
+  const btn=document.getElementById('syncBtn');
+  if(manual&&btn) btn.textContent='↻ Оновлюю…';
+  const rows=await syncFetchList();
+  if(rows===null){
+    if(manual&&btn){btn.textContent=NOTIFY_ENDPOINT?'↻ Немає зв\'язку':'↻ Не налаштовано';setTimeout(()=>btn.textContent='↻ Оновити з таблиці',2500)}
+    return;
+  }
+  let added=0,updated=0;
+  rows.forEach(r=>{
+    const local=apps.find(a=>a.id===r.id||a.sid===r.id);
+    if(!local){
+      apps.push({id:r.id,sid:r.id,name:r.name,phone:r.phone,category:r.category,
+        study:r.study,desiredDate:r.desiredDate,comment:r.comment,
+        status:r.status||'new',appointmentDate:r.appointmentDate||'',appointmentTime:r.appointmentTime||'',
+        createdAt:r.createdAt});
+      added++;
+    }else if(local.status==='new'&&r.status&&r.status!=='new'){
+      local.status=r.status;
+      local.appointmentDate=r.appointmentDate||local.appointmentDate;
+      local.appointmentTime=r.appointmentTime||local.appointmentTime;
+      updated++;
+    }
+  });
+  if(added||updated){
+    save();
+    autoScheduleNew();
+    apps.filter(a=>a.status==='booked'&&a.sid).forEach(a=>syncPushUpdate(a));
+    render();renderCalendar();
+  }
+  if(manual&&btn){btn.textContent=`↻ Готово (+${added})`;setTimeout(()=>btn.textContent='↻ Оновити з таблиці',2500)}
+}
+syncPull(false);
+setInterval(()=>syncPull(false),120000); /* автооновлення кожні 2 хв */
 
 autoScheduleNew();
 render();

@@ -129,14 +129,10 @@ nav{margin-left:auto;display:flex;align-items:center;gap:12px;flex-shrink:0;font
 .was-validated .field input:invalid,.was-validated .field select:invalid{border-color:#c66a5f;background:#fdf6f5}
 .was-validated .field input:invalid ~ .field-error,.was-validated .field:has(input:invalid) .field-error{display:block}
 .was-validated:has(#dataConsent:invalid) .consent-error{display:block}
-.channel-group{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.call-alt{font-size:13px;color:#556050;margin:0 0 12px}
-.call-alt a{color:#3c4a30}
-.channel{position:relative;display:block;cursor:pointer}
-.channel input{position:absolute;opacity:0;inset:0}
-.channel span{display:grid;place-items:center;min-height:44px;padding:6px 8px;border:1.5px solid #cfd4c8;border-radius:12px;font-size:13px;font-weight:700;text-align:center;background:#fff;transition:.15s}
-.channel input:checked + span{border-color:#556349;background:#eef1e9;color:#3c4a30}
-.channel input:focus-visible + span{outline:2px solid #556349;outline-offset:2px}
+.req-text{white-space:pre-wrap;text-align:left;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;background:#f4f5f0;border:1px solid var(--line);border-radius:12px;padding:13px;max-height:220px;overflow:auto;margin:0 0 10px}
+.msg-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 14px}
+.msg-actions .btn{min-height:44px;font-size:13px}
+.btn.secondary{background:#eef1e9;color:#3c4a30}
 .send-request{width:100%;border:0;background:#556349;color:#fff;cursor:pointer}
 .upload-box{border:1.5px dashed #9ca893;border-radius:16px;padding:14px;background:#f7f8f4}
 .upload-help{font-size:13px;color:var(--muted);margin-bottom:10px}
@@ -333,34 +329,38 @@ nav{margin-left:auto;display:flex;align-items:center;gap:12px;flex-shrink:0;font
       </div>
 
       <div class="form-step">
-        <div class="step-title"><span class="step-num">3</span>Спосіб зв’язку</div>
-        <div class="channel-group" role="radiogroup" aria-label="Спосіб зв’язку">
-          <label class="channel"><input type="radio" name="channel" value="whatsapp" checked/><span>WhatsApp</span></label>
-          <label class="channel"><input type="radio" name="channel" value="viber"/><span>Viber</span></label>
-        </div>
-        <p class="call-alt">Без месенджерів? Зателефонуйте в реєстратуру: <a href="tel:+380972808899"><strong>+380 97 280 88 99</strong></a></p>
+        <div class="step-title"><span class="step-num">3</span>Підтвердження</div>
         <label class="consent">
           <input id="dataConsent" required type="checkbox"/>
           <span>Погоджуюся на обробку персональних і медичних даних з метою організації діагностичного дослідження.</span>
         </label>
         <span class="field-error consent-error">Потрібна згода на обробку даних</span>
-        <p class="cart-note" id="channelNote"><strong>Важливо:</strong> месенджер не прикріплює файл автоматично — додайте фото чи PDF до повідомлення вручну. Це не автоматичне підтвердження запису.</p>
-        <button class="btn send-request" type="submit">Надіслати заявку</button>
+        <p class="cart-note">Після формування ви отримаєте готовий текст заявки — його можна надіслати у WhatsApp, Viber або продиктувати за телефоном реєстратури.</p>
+        <button class="btn send-request" type="submit">Сформувати заявку</button>
       </div>
     </form>
 
     <div class="success-panel" id="successPanel" hidden>
       <div class="success-icon" aria-hidden="true">✓</div>
       <h3>Заявку сформовано</h3>
-      <p id="successText"></p>
-      <a class="btn send-request" href="cabinet.html" style="margin-bottom:8px">Відкрити особистий кабінет</a>
-      <button class="btn send-request" type="button" onclick="closeCart()" style="background:#eef1e9;color:#3c4a30">Готово</button>
+      <p id="successText">Надішліть текст заявки будь-яким зручним способом — реєстратура зв'яжеться з вами для підтвердження.</p>
+      <pre class="req-text" id="requestText"></pre>
+      <button class="btn send-request" type="button" id="copyBtn" onclick="copyRequestText()">Скопіювати текст</button>
+      <div class="msg-actions">
+        <a class="btn secondary" id="waLink" href="#" target="_blank" rel="noopener">WhatsApp</a>
+        <a class="btn secondary" id="vbLink" href="#">Viber</a>
+        <a class="btn secondary" href="tel:+380972808899">Подзвонити</a>
+      </div>
+      <p class="cart-note" id="filesReminder" hidden><strong>Нагадування:</strong> файли попереднього висновку прикріпіть до повідомлення вручну.</p>
+      <a class="btn send-request" href="cabinet.html" style="margin-bottom:8px;background:#eef1e9;color:#3c4a30">Особистий кабінет</a>
+      <button class="btn send-request" type="button" onclick="closeCart()" style="background:#fff;border:1px solid #cfd4c8;color:#3c4a30">Готово</button>
     </div>
   </aside>
 </div>
 
 <button class="floating-cart" onclick="openCart()" type="button">Моя заявка <span class="cart-count" data-cart-count="">0</span></button>
 
+<script src="assets/notify.js"></script>
 <script src="assets/cart.js" defer></script>
 </body>
 </html>
