@@ -21,10 +21,25 @@ async function initSlotPicker({ container, apparatus, onPick }) {
             : { start: '08:00', end: '17:00', days: [1, 2, 3, 4, 5, 6] };
   let busy = [];
   let live = false;
+  let avail = null; /* доступність апаратів: {ct:{active,days:[...]}, ...} */
 
   if (typeof syncFetchBusy === 'function') {
     const data = await syncFetchBusy();
-    if (data && data.hours) { hours = data.hours; busy = data.busy || []; live = true; }
+    if (data && data.hours) {
+      hours = data.hours; busy = data.busy || []; live = true;
+      avail = data.availability || null;
+    }
+  }
+  if (!avail && typeof apparatusAvailabilityPublic === 'function') {
+    avail = apparatusAvailabilityPublic(); /* локальний стан (той самий пристрій) */
+  }
+
+  /* апарат вимкнено повністю */
+  if (avail && avail[apparatus] && avail[apparatus].active === false) {
+    container.innerHTML = '<div class="sp-head">Вільний час — ' + apparatusById(apparatus).name + '</div>' +
+      '<div class="sp-empty">На жаль, апарат тимчасово не працює. Залиште заявку з бажаною датою — реєстратура запропонує варіанти, або зателефонуйте.</div>';
+    if (onPick) onPick({ date: '', time: '' });
+    return;
   }
 
   const busySet = new Set(busy
@@ -37,10 +52,13 @@ async function initSlotPicker({ container, apparatus, onPick }) {
   const times = slotTimesFor(apparatus, hours);
 
   /* 7 днів уперед, лише робочі */
+  const appDays = (avail && avail[apparatus] && Array.isArray(avail[apparatus].days))
+    ? avail[apparatus].days : [0, 1, 2, 3, 4, 5, 6];
   const days = [];
-  for (let i = 0; i < 10 && days.length < 7; i++) {
+  for (let i = 0; i < 14 && days.length < 7; i++) {
     const d = new Date(); d.setDate(d.getDate() + i);
     if (!hours.days.includes(d.getDay())) continue;
+    if (!appDays.includes(d.getDay())) continue; /* зміни немає */
     const iso = d.toISOString().slice(0, 10);
     days.push({ iso, label: dayNames[d.getDay()] + ' ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) });
   }

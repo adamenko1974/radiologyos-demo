@@ -7,6 +7,7 @@ const PHONE = '380972808899';
 
 let cart = JSON.parse(localStorage.getItem('radiologyCart') || '[]');
 
+const humanDate = iso => iso ? iso.split('-').reverse().join('.') : '';
 const money = n => new Intl.NumberFormat('uk-UA').format(n) + ' грн';
 
 function saveCart() {
@@ -99,7 +100,9 @@ function pushToStaffPanel({ name, phone, category, studies, desiredDate, desired
   try {
     const apps = JSON.parse(localStorage.getItem(STAFF_STORE) || '[]');
     const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2));
-    studies.forEach(study => {
+    studies.forEach(st => {
+      const study = typeof st === 'string' ? st : st.name;
+      const code = typeof st === 'string' ? '' : st.code;
       apps.push({
         id: uid(),
         name, phone, category, study,
@@ -110,7 +113,8 @@ function pushToStaffPanel({ name, phone, category, studies, desiredDate, desired
         createdAt: new Date().toISOString(),
         sid: sid || '',
         desiredTime: desiredTime || '',
-        apparatus: apparatus || (typeof apparatusForStudyTitle === 'function' ? apparatusForStudyTitle(study) : 'xray')
+        apparatus: (code && typeof apparatusForCode === 'function') ? apparatusForCode(code)
+                 : (apparatus || (typeof apparatusForStudyTitle === 'function' ? apparatusForStudyTitle(study) : 'xray'))
       });
     });
     localStorage.setItem(STAFF_STORE, JSON.stringify(apps));
@@ -174,7 +178,7 @@ requestForm?.addEventListener('submit', e => {
 
   const list = cart.map((x, i) => `${i + 1}. ${x.name} — ${money(x.price)}`).join('\n');
   const total = money(cart.reduce((s, x) => s + x.price, 0));
-  lastRequestText = `Заявка на обстеження\n\nПацієнт: ${name}\nТелефон: ${phone}\nБажана дата: ${dateISO || 'не вказана'}\nЗручний час: ${pickedSlot.time ? pickedSlot.time + ' (обрано з розкладу)' : time}\nНаправлення: ${ref}\nПопередній висновок: ${fileInfo}\n\nОбрані послуги:\n${list}\n\nОрієнтовна сума: ${total}\nКоментар: ${comment}\n\nПрошу зв'язатися для підтвердження запису.`;
+  lastRequestText = `Заявка на обстеження\n\nПацієнт: ${name}\nТелефон: ${phone}\nБажана дата: ${humanDate(dateISO) || 'не вказана'}\nЗручний час: ${pickedSlot.time ? pickedSlot.time + ' (обрано з розкладу)' : time}\nНаправлення: ${ref}\nПопередній висновок: ${fileInfo}\n\nОбрані послуги:\n${list}\n\nОрієнтовна сума: ${total}\nКоментар: ${comment}\n\nПрошу зв'язатися для підтвердження запису.`;
 
   const sid = (crypto.randomUUID ? crypto.randomUUID() : 'sid-' + Date.now());
   const commentFull = [ref, time !== 'будь-який' ? 'Зручний час: ' + time : '', comment !== '—' ? comment : ''].filter(Boolean).join('. ');
@@ -182,10 +186,9 @@ requestForm?.addEventListener('submit', e => {
   pushToStaffPanel({
     name, phone,
     category: 'Цивільна особа',
-    studies: cart.map(x => x.name),
+    studies: cart.map(x => ({ name: x.name, code: x.code })),
     desiredDate: dateISO,
     desiredTime: pickedSlot.time || '',
-    apparatus: cartApparatus(),
     comment: commentFull,
     sid
   });

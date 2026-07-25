@@ -137,3 +137,51 @@ function slotTimesFor(appId, workHours) {
     out.push(pad(Math.floor(m / 60)) + ':' + pad(m % 60));
   return out;
 }
+
+/* --- Стан апаратів та зміни персоналу ---
+   Для кожного апарата: чи працює взагалі (active) і хто на зміні
+   у кожен день тижня (roster). Значення зміни:
+     ''    — не призначено (апарат працює за графіком відділення),
+     'OFF' — зміни немає (апарат цього дня недоступний),
+     інше  — ім'я лаборанта (працює, ім'я видно в розкладі). */
+const APPARATUS_STATE_STORE = 'radiologyos_apparatus_v1';
+
+function defaultApparatusState() {
+  const st = {};
+  APPARATUS.forEach(a => { st[a.id] = { active: true, roster: {0:'',1:'',2:'',3:'',4:'',5:'',6:''} }; });
+  return st;
+}
+
+function getApparatusState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(APPARATUS_STATE_STORE) || 'null');
+    if (saved && typeof saved === 'object') {
+      const def = defaultApparatusState();
+      APPARATUS.forEach(a => { def[a.id] = Object.assign(def[a.id], saved[a.id] || {}); });
+      return def;
+    }
+  } catch (e) {}
+  return defaultApparatusState();
+}
+function saveApparatusState(st) { localStorage.setItem(APPARATUS_STATE_STORE, JSON.stringify(st)); }
+
+/* Доступність апарата в конкретну дату (без урахування годин/слотів) */
+function apparatusAvailableOn(appId, dateISO, state) {
+  const st = (state || getApparatusState())[appId];
+  if (!st || st.active === false) return false;
+  const dow = new Date(dateISO + 'T00:00:00').getDay();
+  return st.roster[dow] !== 'OFF';
+}
+
+/* Санітизована доступність для пацієнтського боку (без імен) */
+function apparatusAvailabilityPublic(state) {
+  const st = state || getApparatusState();
+  const out = {};
+  APPARATUS.forEach(a => {
+    out[a.id] = {
+      active: st[a.id].active !== false,
+      days: [0,1,2,3,4,5,6].filter(d => st[a.id].roster[d] !== 'OFF')
+    };
+  });
+  return out;
+}

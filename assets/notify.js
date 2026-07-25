@@ -84,3 +84,14 @@ function syncSetHours(hours) {
     });
   } catch (e) {}
 }
+
+function syncSetApparatus(availability) {
+  if (!NOTIFY_ENDPOINT) return;
+  try {
+    fetch(NOTIFY_ENDPOINT, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'setApparatus', token: SYNC_TOKEN, availability })
+    });
+  } catch (e) {}
+}
