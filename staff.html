@@ -341,6 +341,43 @@ tr.row-done td{background:#fafafa;color:#6b716c}
   </div>
 </div>
 
+<div class="modal" id="protocolModal">
+  <div class="modal-card">
+    <div class="modal-head"><h2>Протокол дослідження</h2><button class="close" onclick="closeProtocol()">×</button></div>
+    <form id="protocolForm">
+      <input type="hidden" id="protAppId">
+      <div class="field"><label>Пацієнт / дослідження</label><input id="protInfo" readonly style="background:#f4f5f1"></div>
+      <div class="field"><label>Опис дослідження *</label><textarea id="protDesc" required rows="4" placeholder="Методика, ділянка, знахідки"></textarea></div>
+      <div class="field"><label>Висновок *</label><textarea id="protConclusion" required rows="3"></textarea></div>
+      <div class="field"><label>Рекомендації</label><textarea id="protRecs" rows="2"></textarea></div>
+      <div class="field"><label>Лікар-рентгенолог *</label><input id="protDoctor" required placeholder="ПІБ лікаря"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="closeProtocol()">Скасувати</button>
+        <button class="btn btn-primary">Зберегти протокол</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal" id="notifyModal">
+  <div class="modal-card" style="width:min(560px,100%)">
+    <div class="modal-head">
+      <h2>Повідомити пацієнта</h2>
+      <button class="close" onclick="closeNotify()">×</button>
+    </div>
+    <input type="hidden" id="notifyAppId">
+    <div class="field" style="margin-top:16px">
+      <label>Текст повідомлення</label>
+      <textarea id="notifyText" style="min-height:150px"></textarea>
+    </div>
+    <div class="notify-preview" id="notifyPhonePreview"></div>
+    <div class="notify-actions">
+      <button class="notify-channel whatsapp" onclick="sendWhatsApp()">WhatsApp</button>
+      <button class="notify-channel viber" onclick="sendViber()">Viber</button>
+    </div>
+  </div>
+</div>
+
 <script src="assets/pricelist.js"></script>
 <script src="assets/department.js"></script>
 <script src="assets/notify.js"></script>
@@ -861,44 +898,5 @@ autoScheduleNew();
 render();
 renderCalendar();
 </script>
-
-
-<div class="modal" id="protocolModal">
-  <div class="modal-card">
-    <div class="modal-head"><h2>Протокол дослідження</h2><button class="close" onclick="closeProtocol()">×</button></div>
-    <form id="protocolForm">
-      <input type="hidden" id="protAppId">
-      <div class="field"><label>Пацієнт / дослідження</label><input id="protInfo" readonly style="background:#f4f5f1"></div>
-      <div class="field"><label>Опис дослідження *</label><textarea id="protDesc" required rows="4" placeholder="Методика, ділянка, знахідки"></textarea></div>
-      <div class="field"><label>Висновок *</label><textarea id="protConclusion" required rows="3"></textarea></div>
-      <div class="field"><label>Рекомендації</label><textarea id="protRecs" rows="2"></textarea></div>
-      <div class="field"><label>Лікар-рентгенолог *</label><input id="protDoctor" required placeholder="ПІБ лікаря"></div>
-      <div class="modal-actions">
-        <button type="button" class="btn" onclick="closeProtocol()">Скасувати</button>
-        <button class="btn btn-primary">Зберегти протокол</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<div class="modal" id="notifyModal">
-  <div class="modal-card" style="width:min(560px,100%)">
-    <div class="modal-head">
-      <h2>Повідомити пацієнта</h2>
-      <button class="close" onclick="closeNotify()">×</button>
-    </div>
-    <input type="hidden" id="notifyAppId">
-    <div class="field" style="margin-top:16px">
-      <label>Текст повідомлення</label>
-      <textarea id="notifyText" style="min-height:150px"></textarea>
-    </div>
-    <div class="notify-preview" id="notifyPhonePreview"></div>
-    <div class="notify-actions">
-      <button class="notify-channel whatsapp" onclick="sendWhatsApp()">WhatsApp</button>
-      <button class="notify-channel viber" onclick="sendViber()">Viber</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
