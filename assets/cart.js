@@ -94,7 +94,7 @@ medicalFiles?.addEventListener('change', () => {
 
 const STAFF_STORE = 'radiologyos_applications_v1';
 
-function pushToStaffPanel({ name, phone, category, studies, desiredDate, comment }) {
+function pushToStaffPanel({ name, phone, category, studies, desiredDate, comment, sid }) {
   try {
     const apps = JSON.parse(localStorage.getItem(STAFF_STORE) || '[]');
     const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2));
@@ -106,16 +106,18 @@ function pushToStaffPanel({ name, phone, category, studies, desiredDate, comment
         appointmentDate: '', appointmentTime: '',
         status: 'new',
         comment: comment || '',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        sid: sid || ''
       });
     });
     localStorage.setItem(STAFF_STORE, JSON.stringify(apps));
   } catch (e) { /* сховище недоступне — заявка все одно піде у WhatsApp */ }
 }
 
-/* --- Надсилання заявки --- */
+/* --- Формування заявки --- */
 
 const requestForm = document.getElementById('requestForm');
+let lastRequestText = '';
 
 requestForm?.addEventListener('submit', e => {
   e.preventDefault();
@@ -133,44 +135,74 @@ requestForm?.addEventListener('submit', e => {
   const time = document.getElementById('desiredTime').value || 'будь-який';
   const ref = document.getElementById('referral').value;
   const comment = document.getElementById('comment').value.trim() || '—';
-  const channel = requestForm.querySelector('input[name="channel"]:checked').value;
   const files = [...(document.getElementById('medicalFiles')?.files || [])];
   const fileInfo = files.length ? files.map(f => f.name).join(', ') : 'не додані';
 
   const list = cart.map((x, i) => `${i + 1}. ${x.name} — ${money(x.price)}`).join('\n');
   const total = money(cart.reduce((s, x) => s + x.price, 0));
-  const text = `Заявка на обстеження RadiologyOS\n\nПацієнт: ${name}\nТелефон: ${phone}\nБажана дата: ${dateISO || 'не вказана'}\nЗручний час: ${time}\nНаправлення: ${ref}\nПопередній висновок: ${fileInfo}\n\nОбрані послуги:\n${list}\n\nОрієнтовна сума: ${total}\nКоментар: ${comment}\n\nПрошу зв'язатися для підтвердження запису.`;
+  lastRequestText = `Заявка на обстеження\n\nПацієнт: ${name}\nТелефон: ${phone}\nБажана дата: ${dateISO || 'не вказана'}\nЗручний час: ${time}\nНаправлення: ${ref}\nПопередній висновок: ${fileInfo}\n\nОбрані послуги:\n${list}\n\nОрієнтовна сума: ${total}\nКоментар: ${comment}\n\nПрошу зв'язатися для підтвердження запису.`;
+
+  const sid = (crypto.randomUUID ? crypto.randomUUID() : 'sid-' + Date.now());
+  const commentFull = [ref, time !== 'будь-який' ? 'Зручний час: ' + time : '', comment !== '—' ? comment : ''].filter(Boolean).join('. ');
 
   pushToStaffPanel({
     name, phone,
     category: 'Цивільна особа',
     studies: cart.map(x => x.name),
     desiredDate: dateISO,
-    comment: [ref, time !== 'будь-який' ? 'Зручний час: ' + time : '', comment !== '—' ? comment : ''].filter(Boolean).join('. ')
+    comment: commentFull,
+    sid
   });
 
-  if (channel === 'whatsapp') {
-    window.open(`https://wa.me/${PHONE}?text=${encodeURIComponent(text)}`, '_blank');
-  } else if (channel === 'viber') {
-    try { navigator.clipboard?.writeText(text); } catch (err) {}
-    window.open(`viber://chat?number=%2B${PHONE}`, '_blank');
-  }
+  if (typeof notifyAdmin === 'function') notifyAdmin({
+    id: sid, name, phone,
+    category: 'Цивільна особа',
+    studies: cart.map(x => x.name).join('; '),
+    desiredDate: dateISO,
+    comment: commentFull
+  });
 
-  showSuccess(channel, files.length > 0);
+  showSuccess(files.length > 0);
 });
 
-function showSuccess(channel, hasFiles) {
-  const texts = {
-    whatsapp: 'Чат WhatsApp відкрито — надішліть підготовлене повідомлення, і реєстратура зв\'яжеться з вами для підтвердження.' + (hasFiles ? ' Не забудьте вручну прикріпити файли висновку.' : ''),
-    viber: 'Відкрито чат Viber. Текст заявки скопійовано — вставте його в повідомлення та надішліть.' + (hasFiles ? ' Файли висновку прикріпіть вручну.' : '')
-  };
-  document.getElementById('successText').textContent = texts[channel];
+function showSuccess(hasFiles) {
+  document.getElementById('requestText').textContent = lastRequestText;
+  const enc = encodeURIComponent(lastRequestText);
+  document.getElementById('waLink').href = `https://wa.me/${PHONE}?text=${enc}`;
+  document.getElementById('vbLink').href = `viber://chat?number=%2B${PHONE}`;
+  document.getElementById('filesReminder').hidden = !hasFiles;
   requestForm.hidden = true;
   document.getElementById('successPanel').hidden = false;
   document.querySelector('.cart-total').style.display = 'none';
   cart = [];
   saveCart();
 }
+
+function copyRequestText() {
+  const done = () => {
+    const b = document.getElementById('copyBtn');
+    b.textContent = '✓ Скопійовано';
+    setTimeout(() => { b.textContent = 'Скопіювати текст'; }, 2000);
+  };
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(lastRequestText).then(done).catch(() => fallbackCopy(done));
+  } else fallbackCopy(done);
+}
+
+function fallbackCopy(done) {
+  const ta = document.createElement('textarea');
+  ta.value = lastRequestText;
+  ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); done(); } catch (e) { alert('Виділіть текст заявки і скопіюйте вручну.'); }
+  document.body.removeChild(ta);
+}
+
+/* Viber не передає текст у чат — копіюємо перед відкриттям */
+document.getElementById('vbLink')?.addEventListener('click', () => {
+  try { navigator.clipboard?.writeText(lastRequestText); } catch (e) {}
+});
 
 /* повертаємо форму при наступному відкритті заявки */
 const _openCart = openCart;
