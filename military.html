@@ -582,7 +582,7 @@ document.getElementById('militaryRequestForm').addEventListener('submit', event 
   const hasFile = (document.getElementById('militaryPreviousReport')?.files || []).length > 0;
 
   const list = militaryCart.map((x, i) => `${i + 1}. ${x.name} (код ${x.code})`).join('\n');
-  window.milRequestText = `Заявка військовослужбовця на безоплатне дослідження\n\nПацієнт: ${name}\nТелефон: ${phone}\nБажана дата: ${dateISO || 'не вказана'}\nЗручний час: ${_ps.time ? _ps.time + ' (обрано з розкладу)' : time}\nНаправлення: ${referral}\n\nОбрані дослідження:\n${list}\n\nКоментар: ${comment}\n\nПрошу зв'язатися для підтвердження запису.`;
+  window.milRequestText = `Заявка військовослужбовця на безоплатне дослідження\n\nПацієнт: ${name}\nТелефон: ${phone}\nБажана дата: ${dateISO ? dateISO.split('-').reverse().join('.') : 'не вказана'}\nЗручний час: ${_ps.time ? _ps.time + ' (обрано з розкладу)' : time}\nНаправлення: ${referral}\n\nОбрані дослідження:\n${list}\n\nКоментар: ${comment}\n\nПрошу зв'язатися для підтвердження запису.`;
 
   const commentFull = [referral, time !== 'будь-який' ? 'Зручний час: ' + time : '', comment !== '—' ? comment : ''].filter(Boolean).join('. ');
   const _sid = (crypto.randomUUID ? crypto.randomUUID() : 'sid-' + Date.now());
