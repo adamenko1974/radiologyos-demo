@@ -170,10 +170,16 @@ function showSuccess(hasFiles) {
   const enc = encodeURIComponent(lastRequestText);
   document.getElementById('waLink').href = `https://wa.me/${PHONE}?text=${enc}`;
   document.getElementById('vbLink').href = `viber://chat?number=%2B${PHONE}`;
+  const em = document.getElementById('emLink');
+  if (em && typeof REGISTRY_EMAIL !== 'undefined' && REGISTRY_EMAIL) {
+    em.hidden = false;
+    em.href = `mailto:${REGISTRY_EMAIL}?subject=${encodeURIComponent('Заявка на обстеження')}&body=${enc}`;
+  }
   document.getElementById('filesReminder').hidden = !hasFiles;
   requestForm.hidden = true;
   document.getElementById('successPanel').hidden = false;
   document.querySelector('.cart-total').style.display = 'none';
+  document.getElementById('cartItems').style.display = 'none';
   cart = [];
   saveCart();
 }
@@ -213,6 +219,8 @@ openCart = function () {
     document.getElementById('successPanel').hidden = true;
     const totalRow = document.querySelector('.cart-total');
     if (totalRow) totalRow.style.display = '';
+    const items = document.getElementById('cartItems');
+    if (items) items.style.display = '';
   }
   _openCart();
 };

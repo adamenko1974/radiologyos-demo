@@ -6,6 +6,10 @@
 const NOTIFY_ENDPOINT = '';
 const SYNC_TOKEN = '';
 
+/* Email реєстратури для кнопки «Email» на екрані заявки.
+   Порожньо — кнопка не показується. */
+const REGISTRY_EMAIL = '';
+
 function notifyAdmin(payload) {
   if (!NOTIFY_ENDPOINT) return;
   try {
@@ -40,4 +44,23 @@ async function syncFetchList() {
     const data = await r.json();
     return Array.isArray(data) ? data : null;
   } catch (e) { return null; }
+}
+
+async function syncGetAdmins() {
+  if (!NOTIFY_ENDPOINT) return null;
+  try {
+    const r = await fetch(NOTIFY_ENDPOINT + '?action=admins&token=' + encodeURIComponent(SYNC_TOKEN));
+    return await r.json();
+  } catch (e) { return null; }
+}
+
+function syncSetAdmin(email) {
+  if (!NOTIFY_ENDPOINT) return;
+  try {
+    fetch(NOTIFY_ENDPOINT, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'setAdmin', token: SYNC_TOKEN, email })
+    });
+  } catch (e) {}
 }
