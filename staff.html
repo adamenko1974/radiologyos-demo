@@ -162,7 +162,7 @@ tr.row-done td{background:#fafafa;color:#6b716c}
     <p style="margin:0 0 16px;font-size:13px;color:#667062">RadiologyOS · робота із заявками, розкладом і прайсом</p>
     <form id="authForm">
       <div style="position:relative">
-        <input type="password" id="authPass" placeholder="Пароль" autocomplete="current-password" required
+        <input type="password" id="authPass" placeholder="Пароль" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" required
           style="width:100%;padding:13px 46px 13px 13px;border:1px solid #cfd4c8;border-radius:12px;font:inherit;box-sizing:border-box">
         <button type="button" id="authPassEye" aria-label="Показати пароль" onclick="togglePassEye()"
           style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;border-radius:9px;background:transparent;cursor:pointer;color:#6c7562;display:grid;place-items:center">
@@ -432,7 +432,7 @@ if(sessionStorage.getItem('radiologyos_staff_auth')==='1'){
 }
 document.getElementById('authForm')?.addEventListener('submit',async e=>{
   e.preventDefault();
-  const hash=await sha256(document.getElementById('authPass').value);
+  const hash=await sha256(document.getElementById('authPass').value.trim());
   if(hash===currentPassHash()){
     sessionStorage.setItem('radiologyos_staff_auth','1');
     document.getElementById('authGate').remove();
@@ -800,7 +800,7 @@ document.getElementById('protocolForm').addEventListener('submit',e=>{
 
 
 /* --- Редактор прайсу --- */
-let priceData=getPricelist();
+let priceData=(typeof getPricelist==='function')?getPricelist():[];
 function persistPrices(){savePricelist(priceData);}
 function renderPriceEditor(){
   const box=document.getElementById('priceEditor');
@@ -850,7 +850,7 @@ renderPriceEditor();
 
 
 /* --- Редактори персоналу та обладнання --- */
-let staffData=getStaffList(), equipData=getEquipment();
+let staffData=(typeof getStaffList==='function')?getStaffList():[], equipData=(typeof getEquipment==='function')?getEquipment():[];
 function renderStaffEditor(){
   const inp='padding:9px;border:1px solid #cfd4c8;border-radius:9px;width:100%';
   document.getElementById('staffEditor').innerHTML=staffData.map((p,i)=>`
@@ -886,9 +886,9 @@ renderStaffEditor(); renderEquipEditor();
 
 async function changePass(){
   const msg=document.getElementById('passMsg');
-  const oldH=await sha256(document.getElementById('passOld').value);
+  const oldH=await sha256(document.getElementById('passOld').value.trim());
   if(oldH!==currentPassHash()){msg.textContent='Поточний пароль невірний';msg.style.color='#9b3b32';msg.style.display='block';return}
-  const np=document.getElementById('passNew').value;
+  const np=document.getElementById('passNew').value.trim();
   if(np.length<6){msg.textContent='Новий пароль має бути від 6 символів';msg.style.color='#9b3b32';msg.style.display='block';return}
   localStorage.setItem(AUTH_HASH_STORE,await sha256(np));
   document.getElementById('passOld').value=document.getElementById('passNew').value='';
@@ -969,7 +969,7 @@ initAdminPicker();
 
 
 /* --- Редактор головної сторінки --- */
-let siteData=getSiteContent();
+let siteData=(typeof getSiteContent==='function')?getSiteContent():null;
 const SITE_FIELDS=[
   ['__hdr','Шапка (всі сторінки)'],
   ['brandTitle','Назва закладу'],
@@ -1007,7 +1007,7 @@ function renderSiteEditor(){
 }
 function siteSaved(){const m=document.getElementById('siteMsg');m.style.display='block';setTimeout(()=>m.style.display='none',1500)}
 function resetSiteEditor(){if(confirm('Повернути стандартні тексти головної?')){resetSiteContent();siteData=getSiteContent();renderSiteEditor()}}
-renderSiteEditor();
+if(siteData)renderSiteEditor();
 
 autoScheduleNew();
 render();
