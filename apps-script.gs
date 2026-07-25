@@ -20,8 +20,19 @@
  * олівець → Version: New version → Deploy (URL залишиться той самий).
  */
 
-var ADMIN_EMAIL = 'ВАША_ПОШТА@gmail.com';   // ← ваша адреса
+/* Список можливих отримувачів сповіщень. Впишіть усіх, між ким
+   хочете перемикатися (перший — отримувач за замовчуванням).
+   Активного адміністратора обирають у панелі персоналу: Налаштування →
+   «Сповіщення про заявки». Вибір зберігається тут, у властивостях скрипта. */
+var ADMIN_EMAILS = [
+  'ВАША_ПОШТА@gmail.com'          // ← додайте інші рядком нижче через кому
+];
 var SYNC_TOKEN  = 'ЗМІНІТЬ_МЕНЕ';           // ← ваш код-пароль
+
+function activeAdmin_() {
+  var saved = PropertiesService.getScriptProperties().getProperty('active_admin');
+  return (saved && ADMIN_EMAILS.indexOf(saved) !== -1) ? saved : ADMIN_EMAILS[0];
+}
 
 var HEADERS = ['ID','Створено','Пацієнт','Телефон','Категорія',
                'Дослідження','Бажана дата','Коментар','Статус','Дата запису','Час запису'];
@@ -40,6 +51,7 @@ function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
     if (data.action === 'update') return handleUpdate_(data);
+    if (data.action === 'setAdmin') return handleSetAdmin_(data);
     return handleSubmit_(data);
   } catch (err) {
     return ContentService.createTextOutput('error');
@@ -63,7 +75,7 @@ function handleSubmit_(data) {
     'new', '', ''
   ]);
   MailApp.sendEmail({
-    to: ADMIN_EMAIL,
+    to: activeAdmin_(),
     subject: '🩻 Нова заявка: ' + data.name + ' — ' + String(data.studies).slice(0, 60),
     body: 'Пацієнт: ' + data.name + '\nТелефон: ' + data.phone +
           '\nКатегорія: ' + (data.category || '—') +
@@ -90,9 +102,22 @@ function handleUpdate_(data) {
   return ContentService.createTextOutput('notfound');
 }
 
+
+function handleSetAdmin_(data) {
+  if (data.token !== SYNC_TOKEN) return ContentService.createTextOutput('denied');
+  if (ADMIN_EMAILS.indexOf(data.email) === -1) return ContentService.createTextOutput('unknown');
+  PropertiesService.getScriptProperties().setProperty('active_admin', data.email);
+  return ContentService.createTextOutput('ok');
+}
+
 function doGet(e) {
   if (!e.parameter || e.parameter.token !== SYNC_TOKEN) {
     return ContentService.createTextOutput('denied');
+  }
+  if (e.parameter.action === 'admins') {
+    return ContentService.createTextOutput(JSON.stringify({
+      list: ADMIN_EMAILS, active: activeAdmin_()
+    })).setMimeType(ContentService.MimeType.JSON);
   }
   var values = sheet_().getDataRange().getValues();
   var out = [];

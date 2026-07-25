@@ -302,6 +302,14 @@ tr.row-done td{background:#fafafa;color:#6b716c}
         <p id="whSaved" style="color:#2f5c2a;font-size:13px;display:none">✓ Збережено</p>
       </div>
       <div class="panel queue">
+        <h2>Сповіщення про заявки</h2>
+        <p style="color:#667062;font-size:13px">Кому надходять електронні листи про нові заявки. Список адрес задається у скрипті Google (apps-script.gs), тут обирається активний отримувач.</p>
+        <div id="adminPicker" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <span style="color:#8a927f;font-size:13px">Завантаження…</span>
+        </div>
+        <p id="adminMsg" style="font-size:13px;display:none"></p>
+      </div>
+      <div class="panel queue">
         <h2>Пароль входу</h2>
         <p style="color:#667062;font-size:13px">Змінений пароль діє на цьому пристрої. Це базовий захист від сторонніх — не зберігайте в системі чутливі медичні дані.</p>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
@@ -818,15 +826,22 @@ renderPriceEditor();
 /* --- Редактори персоналу та обладнання --- */
 let staffData=getStaffList(), equipData=getEquipment();
 function renderStaffEditor(){
+  const inp='padding:9px;border:1px solid #cfd4c8;border-radius:9px;width:100%';
   document.getElementById('staffEditor').innerHTML=staffData.map((p,i)=>`
-   <div style="display:grid;grid-template-columns:1fr 1fr 150px 32px;gap:7px;margin:8px 0;align-items:center">
-     <input value="${esc(p.name)}" placeholder="ПІБ" onchange="staffData[${i}].name=this.value;saveStaffList(staffData)" style="padding:9px;border:1px solid #cfd4c8;border-radius:9px">
-     <input value="${esc(p.role)}" placeholder="Посада" onchange="staffData[${i}].role=this.value;saveStaffList(staffData)" style="padding:9px;border:1px solid #cfd4c8;border-radius:9px">
-     <input value="${esc(p.schedule||'')}" placeholder="Пн–Пт 8:00–15:00" onchange="staffData[${i}].schedule=this.value;saveStaffList(staffData)" style="padding:9px;border:1px solid #cfd4c8;border-radius:9px">
-     <button class="icon-btn" onclick="staffData.splice(${i},1);saveStaffList(staffData);renderStaffEditor()">×</button>
+   <div style="border:1px solid #e0e4da;border-radius:12px;padding:10px;margin:10px 0">
+     <div style="display:grid;grid-template-columns:1fr 1fr 32px;gap:7px;align-items:center">
+       <input value="${esc(p.name)}" placeholder="ПІБ" onchange="staffData[${i}].name=this.value;saveStaffList(staffData)" style="${inp}">
+       <input value="${esc(p.role)}" placeholder="Посада" onchange="staffData[${i}].role=this.value;saveStaffList(staffData)" style="${inp}">
+       <button class="icon-btn" title="Видалити" onclick="staffData.splice(${i},1);saveStaffList(staffData);renderStaffEditor()">×</button>
+     </div>
+     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:7px">
+       <input value="${esc(p.phone||'')}" placeholder="Телефон: +380 …" inputmode="tel" onchange="staffData[${i}].phone=this.value;saveStaffList(staffData)" style="${inp}">
+       <input value="${esc(p.email||'')}" placeholder="Email" inputmode="email" onchange="staffData[${i}].email=this.value;saveStaffList(staffData)" style="${inp}">
+       <input value="${esc(p.schedule||'')}" placeholder="Графік: Пн–Пт 8:00–15:00" onchange="staffData[${i}].schedule=this.value;saveStaffList(staffData)" style="${inp}">
+     </div>
    </div>`).join('');
 }
-function addStaffPerson(){staffData.push({name:'',role:'',schedule:''});saveStaffList(staffData);renderStaffEditor()}
+function addStaffPerson(){staffData.push({name:'',role:'',schedule:'',phone:'',email:''});saveStaffList(staffData);renderStaffEditor()}
 function resetStaff(){if(confirm('Повернути стандартний список персоналу?')){resetStaffList();staffData=getStaffList();renderStaffEditor()}}
 function renderEquipEditor(){
   document.getElementById('equipEditor').innerHTML=equipData.map((e,i)=>`
@@ -893,6 +908,38 @@ async function syncPull(manual){
 }
 syncPull(false);
 setInterval(()=>syncPull(false),120000); /* автооновлення кожні 2 хв */
+
+
+/* --- Вибір адміністратора для сповіщень --- */
+async function initAdminPicker(){
+  const box=document.getElementById('adminPicker');
+  if(typeof syncGetAdmins!=='function'||!NOTIFY_ENDPOINT){
+    box.innerHTML='<span style="color:#8a927f;font-size:13px">Спершу налаштуйте зв\u2019язок із Google (apps-script.gs та assets/notify.js).</span>';
+    return;
+  }
+  const data=await syncGetAdmins();
+  if(!data||!Array.isArray(data.list)){
+    box.innerHTML='<span style="color:#9b3b32;font-size:13px">Немає зв\u2019язку зі скриптом. Перевірте URL і токен у notify.js.</span>';
+    return;
+  }
+  const sel=document.createElement('select');
+  sel.style.cssText='padding:10px;border:1px solid #cfd4c8;border-radius:10px;font:inherit;min-width:240px';
+  data.list.forEach(em=>{
+    const o=document.createElement('option');
+    o.value=em;o.textContent=em;if(em===data.active)o.selected=true;
+    sel.appendChild(o);
+  });
+  const btn=document.createElement('button');
+  btn.className='btn btn-primary';btn.textContent='Зробити отримувачем';
+  btn.onclick=()=>{
+    syncSetAdmin(sel.value);
+    const msg=document.getElementById('adminMsg');
+    msg.textContent='✓ Сповіщення надходитимуть на '+sel.value;
+    msg.style.color='#2f5c2a';msg.style.display='block';
+  };
+  box.innerHTML='';box.append(sel,btn);
+}
+initAdminPicker();
 
 autoScheduleNew();
 render();

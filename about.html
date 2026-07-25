@@ -61,6 +61,7 @@ h2 .sec-icon svg{width:18px;height:18px}
 .avatar{width:46px;height:46px;border-radius:50%;background:#eef1e9;color:#4f5d3e;display:grid;place-items:center;flex-shrink:0;font-weight:800}
 .person strong{display:block;font-size:15px}
 .person small{display:block;color:var(--muted);font-size:13px}
+.p-contacts a{color:#3c4a30;font-weight:600}
 .person .sched{margin-left:auto;flex-shrink:0;font-size:12.5px;font-weight:700;color:#3c4a30;background:#eef1e9;border-radius:99px;padding:6px 11px;white-space:nowrap}
 @media(max-width:520px){.person{flex-wrap:wrap}.person .sched{margin-left:59px}}
 
@@ -153,7 +154,9 @@ const personIcon = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" 
 document.getElementById('staffList').innerHTML = getStaffList().map(p => `
   <div class="person">
     <span class="avatar">${p.name ? esc(initials(p.name)) : personIcon}</span>
-    <div><strong>${esc(p.name || p.role)}</strong>${p.name ? `<small>${esc(p.role)}</small>` : ''}</div>
+    <div><strong>${esc(p.name || p.role)}</strong>${p.name ? `<small>${esc(p.role)}</small>` : ''}
+      ${p.phone || p.email ? `<small class="p-contacts">${p.phone ? `<a href="tel:${esc(p.phone.replace(/[^+\d]/g,''))}">${esc(p.phone)}</a>` : ''}${p.phone && p.email ? ' · ' : ''}${p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : ''}</small>` : ''}
+    </div>
     ${p.schedule ? `<span class="sched">${esc(p.schedule)}</span>` : ''}
   </div>`).join('');
 </script>

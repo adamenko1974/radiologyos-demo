@@ -130,7 +130,9 @@ nav{margin-left:auto;display:flex;align-items:center;gap:12px;flex-shrink:0;font
 .was-validated .field input:invalid ~ .field-error,.was-validated .field:has(input:invalid) .field-error{display:block}
 .was-validated:has(#dataConsent:invalid) .consent-error{display:block}
 .req-text{white-space:pre-wrap;text-align:left;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;background:#f4f5f0;border:1px solid var(--line);border-radius:12px;padding:13px;max-height:220px;overflow:auto;margin:0 0 10px}
-.msg-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 14px}
+.msg-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 12px}
+.next-steps{text-align:left;font-size:13.5px;color:#3d4638;padding-left:20px;margin:0 0 12px}
+.next-steps li{margin:5px 0}
 .msg-actions .btn{min-height:44px;font-size:13px}
 .btn.secondary{background:#eef1e9;color:#3c4a30}
 .send-request{width:100%;border:0;background:#556349;color:#fff;cursor:pointer}
@@ -343,14 +345,20 @@ nav{margin-left:auto;display:flex;align-items:center;gap:12px;flex-shrink:0;font
     <div class="success-panel" id="successPanel" hidden>
       <div class="success-icon" aria-hidden="true">✓</div>
       <h3>Заявку сформовано</h3>
-      <p id="successText">Надішліть текст заявки будь-яким зручним способом — реєстратура зв'яжеться з вами для підтвердження.</p>
+      <p id="successText">Заявку вже передано у систему відділення. Залишився один крок — надіслати її текст реєстратурі:</p>
       <pre class="req-text" id="requestText"></pre>
-      <button class="btn send-request" type="button" id="copyBtn" onclick="copyRequestText()">Скопіювати текст</button>
+      <ol class="next-steps">
+        <li>Натисніть зручну кнопку нижче: у <strong>WhatsApp</strong> та <strong>Email</strong> текст підставиться сам, для <strong>Viber</strong> він уже скопійований — просто вставте у чат.</li>
+        <li>Надішліть повідомлення.</li>
+        <li>Реєстратура зателефонує вам для підтвердження дати й часу.</li>
+      </ol>
       <div class="msg-actions">
         <a class="btn secondary" id="waLink" href="#" target="_blank" rel="noopener">WhatsApp</a>
         <a class="btn secondary" id="vbLink" href="#">Viber</a>
+        <a class="btn secondary" id="emLink" href="#" hidden>Email</a>
         <a class="btn secondary" href="tel:+380972808899">Подзвонити</a>
       </div>
+      <button class="btn send-request" type="button" id="copyBtn" onclick="copyRequestText()" style="background:#eef1e9;color:#3c4a30">Скопіювати текст вручну</button>
       <p class="cart-note" id="filesReminder" hidden><strong>Нагадування:</strong> файли попереднього висновку прикріпіть до повідомлення вручну.</p>
       <a class="btn send-request" href="cabinet.html" style="margin-bottom:8px;background:#eef1e9;color:#3c4a30">Особистий кабінет</a>
       <button class="btn send-request" type="button" onclick="closeCart()" style="background:#fff;border:1px solid #cfd4c8;color:#3c4a30">Готово</button>

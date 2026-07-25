@@ -250,7 +250,9 @@ header .brand{flex:1;min-width:0}
 .success-panel{background:#fff;border:1px solid #e0e4da;border-radius:18px;padding:24px 18px;text-align:center}
 .success-icon{width:56px;height:56px;margin:0 auto 12px;border-radius:50%;background:#556349;color:#fff;display:grid;place-items:center;font-size:28px}
 .req-text{white-space:pre-wrap;text-align:left;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;background:#f4f5f0;border:1px solid #e0e4da;border-radius:12px;padding:13px;max-height:220px;overflow:auto;margin:0 0 10px}
-.msg-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 14px}
+.msg-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 12px}
+.next-steps{text-align:left;font-size:13.5px;color:#3d4638;padding-left:20px;margin:0 0 12px}
+.next-steps li{margin:5px 0}
 .msg-actions .btn{min-height:44px;font-size:13px}
 .btn.secondary{background:#eef1e9;color:#3c4a30}
 @media(max-width:520px){.field-row{grid-template-columns:1fr}}
@@ -408,14 +410,20 @@ document.querySelectorAll('.price-group h2').forEach((heading)=>{
     <div class="success-panel" id="milSuccessPanel" hidden>
       <div class="success-icon" aria-hidden="true">✓</div>
       <h3>Заявку сформовано</h3>
-      <p>Надішліть текст заявки будь-яким зручним способом — реєстратура зв'яжеться з вами для підтвердження.</p>
+      <p>Заявку вже передано у систему відділення. Залишився один крок — надіслати її текст реєстратурі:</p>
       <pre class="req-text" id="milRequestText"></pre>
-      <button class="btn send-request" type="button" id="milCopyBtn" onclick="milCopyText()">Скопіювати текст</button>
+      <ol class="next-steps">
+        <li>Натисніть зручну кнопку нижче: у <strong>WhatsApp</strong> та <strong>Email</strong> текст підставиться сам, для <strong>Viber</strong> він уже скопійований — просто вставте у чат.</li>
+        <li>Надішліть повідомлення.</li>
+        <li>Реєстратура зателефонує вам для підтвердження дати й часу.</li>
+      </ol>
       <div class="msg-actions">
         <a class="btn secondary" id="milWaLink" href="#" target="_blank" rel="noopener">WhatsApp</a>
         <a class="btn secondary" id="milVbLink" href="#">Viber</a>
+        <a class="btn secondary" id="milEmLink" href="#" hidden>Email</a>
         <a class="btn secondary" href="tel:+380972808899">Подзвонити</a>
       </div>
+      <button class="btn send-request" type="button" id="milCopyBtn" onclick="milCopyText()" style="background:#eef1e9;color:#3c4a30">Скопіювати текст вручну</button>
       <button class="btn send-request" type="button" onclick="closeMilitaryCart()" style="background:#eef1e9;color:#3c4a30">Готово</button>
     </div>
 </aside>
@@ -567,6 +575,11 @@ document.getElementById('militaryRequestForm').addEventListener('submit', event 
   const enc = encodeURIComponent(window.milRequestText);
   document.getElementById('milWaLink').href = `https://wa.me/380972808899?text=${enc}`;
   document.getElementById('milVbLink').href = 'viber://chat?number=%2B380972808899';
+  const milEm = document.getElementById('milEmLink');
+  if (milEm && typeof REGISTRY_EMAIL !== 'undefined' && REGISTRY_EMAIL) {
+    milEm.hidden = false;
+    milEm.href = `mailto:${REGISTRY_EMAIL}?subject=${encodeURIComponent('Заявка військовослужбовця')}&body=${enc}`;
+  }
   form.hidden = true;
   document.getElementById('milSuccessPanel').hidden = false;
   militaryCart = [];
