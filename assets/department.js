@@ -62,3 +62,38 @@ function formatWorkDays(days) {
   }
   return parts.join(', ');
 }
+
+/* --- Вміст головної сторінки (редагується в панелі: Відділення → Головна сторінка) --- */
+const SITECONTENT_STORE = 'radiologyos_sitecontent_v1';
+
+const DEFAULT_SITECONTENT = {
+  brandTitle: 'Чернігівський військовий госпіталь',
+  brandSubtitle: 'Відділення променевої діагностики',
+  milTitle: 'Військовослужбовцям',
+  milSub: 'Безоплатні дослідження за направленням',
+  civTitle: 'Цивільним особам',
+  civSub: 'Платні дослідження — повний прайс і запис',
+  phone: '+380 97 280 88 99',
+  address: 'м. Чернігів, вул. Полуботка, 40',
+  /* сторінка цін */
+  pricePageTitle: 'Платні дослідження',
+  pricePageSub: 'Вартість указана відповідно до чинних тарифів.',
+  priceIntro: 'Цивільним особам — платні послуги. Оберіть потрібне дослідження, натисніть «Записатися» та введіть свої дані. Після опрацювання заявки з вами зв\u2019яжуться і повідомлять дату та час проведення дослідження.',
+  priceListTitle: 'Тарифи на платні медичні послуги',
+  priceLead: 'Відділення променевої діагностики Чернігівського військового госпіталю військової частини А3120.',
+  /* сторінка військових */
+  milPageTitle: 'Дослідження для військовослужбовців',
+  milPageSub: 'За направленням лікаря та відповідно до чинного законодавства України.',
+  milNotice: 'Оберіть потрібний розділ. Для військовослужбовців дослідження виконуються безоплатно за направленням та відповідно до законодавства України.',
+  milLead: 'Відділення променевої діагностики Чернігівського військового госпіталю військової частини А3120.'
+};
+
+function getSiteContent() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SITECONTENT_STORE) || 'null');
+    if (saved && typeof saved === 'object') return Object.assign({}, DEFAULT_SITECONTENT, saved);
+  } catch (e) {}
+  return Object.assign({}, DEFAULT_SITECONTENT);
+}
+function saveSiteContent(c) { localStorage.setItem(SITECONTENT_STORE, JSON.stringify(c)); }
+function resetSiteContent() { localStorage.removeItem(SITECONTENT_STORE); }
