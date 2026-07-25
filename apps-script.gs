@@ -35,7 +35,7 @@ function activeAdmin_() {
 }
 
 var HEADERS = ['ID','Створено','Пацієнт','Телефон','Категорія',
-               'Дослідження','Бажана дата','Коментар','Статус','Дата запису','Час запису'];
+               'Дослідження','Бажана дата','Коментар','Статус','Дата запису','Час запису','Апарат'];
 
 function sheet_() {
   var sh = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
@@ -52,6 +52,7 @@ function doPost(e) {
     var data = JSON.parse(e.postData.contents);
     if (data.action === 'update') return handleUpdate_(data);
     if (data.action === 'setAdmin') return handleSetAdmin_(data);
+    if (data.action === 'setHours') return handleSetHours_(data);
     return handleSubmit_(data);
   } catch (err) {
     return ContentService.createTextOutput('error');
@@ -72,7 +73,8 @@ function handleSubmit_(data) {
     String(data.studies).slice(0, 500),
     String(data.desiredDate || '').slice(0, 20),
     String(data.comment || '').slice(0, 500),
-    'new', '', ''
+    'new', '', '',
+    String(data.apparatus || '').slice(0, 10)
   ]);
   MailApp.sendEmail({
     to: activeAdmin_(),
@@ -96,6 +98,7 @@ function handleUpdate_(data) {
       if (data.status)          sh.getRange(i + 1, 9).setValue(String(data.status).slice(0, 20));
       if ('appointmentDate' in data) sh.getRange(i + 1, 10).setValue(String(data.appointmentDate || ''));
       if ('appointmentTime' in data) sh.getRange(i + 1, 11).setValue(String(data.appointmentTime || ''));
+      if ('apparatus' in data)       sh.getRange(i + 1, 12).setValue(String(data.apparatus || ''));
       return ContentService.createTextOutput('ok');
     }
   }
@@ -110,10 +113,37 @@ function handleSetAdmin_(data) {
   return ContentService.createTextOutput('ok');
 }
 
+function handleSetHours_(data) {
+  if (data.token !== SYNC_TOKEN) return ContentService.createTextOutput('denied');
+  PropertiesService.getScriptProperties().setProperty('work_hours', JSON.stringify(data.hours || {}));
+  return ContentService.createTextOutput('ok');
+}
+
 function doGet(e) {
   if (!e.parameter || e.parameter.token !== SYNC_TOKEN) {
     return ContentService.createTextOutput('denied');
   }
+  if (e.parameter.action === 'busy') {
+    /* Публічно-безпечна відповідь для вибору часу пацієнтом:
+       лише зайняті слоти і графік, жодних імен чи телефонів. */
+    var hoursRaw = PropertiesService.getScriptProperties().getProperty('work_hours');
+    var hours = hoursRaw ? JSON.parse(hoursRaw) : { start: '08:00', end: '17:00', days: [1,2,3,4,5,6] };
+    var vals = sheet_().getDataRange().getValues();
+    var busy = [];
+    for (var j = 1; j < vals.length; j++) {
+      var st = String(vals[j][8] || '');
+      if ((st === 'booked' || st === 'done') && vals[j][9]) {
+        busy.push({
+          date: vals[j][9] instanceof Date ? Utilities.formatDate(vals[j][9], Session.getScriptTimeZone(), 'yyyy-MM-dd') : String(vals[j][9]),
+          time: String(vals[j][10] || ''),
+          apparatus: String(vals[j][11] || 'xray')
+        });
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({ hours: hours, busy: busy }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
   if (e.parameter.action === 'admins') {
     return ContentService.createTextOutput(JSON.stringify({
       list: ADMIN_EMAILS, active: activeAdmin_()
@@ -132,7 +162,8 @@ function doGet(e) {
       comment: String(r[7]),
       status: String(r[8] || 'new'),
       appointmentDate: r[9] instanceof Date ? Utilities.formatDate(r[9], Session.getScriptTimeZone(), 'yyyy-MM-dd') : String(r[9]),
-      appointmentTime: String(r[10])
+      appointmentTime: String(r[10]),
+      apparatus: String(r[11] || '')
     });
   }
   return ContentService.createTextOutput(JSON.stringify(out))

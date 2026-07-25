@@ -237,6 +237,7 @@ tr.row-done td{background:#fafafa;color:#6b716c}
           <div>
             <h2>Розклад кабінету — тиждень</h2>
             <p>Клік по вільній клітинці — записати пацієнта. Кнопка ◐ у клітинці — зробити час робочим/неробочим.</p>
+            <div id="apparatusTabs" style="display:flex;gap:8px;margin:10px 0"></div>
           </div>
           <div class="calendar-controls">
             <button class="btn" id="prevDay" title="Попередній тиждень">←</button>
@@ -457,8 +458,9 @@ function isWorkingSlot(date,time){
   if(time in settings) return settings[time];
   return isWorkDay(date) && defaultWorkFor(time);
 }
-function isBookedSlot(date,time,ignoreId=''){
-  return apps.some(a=>a.id!==ignoreId && a.appointmentDate===date && a.appointmentTime===time && a.status!=='cancelled');
+function isBookedSlot(date,time,ignoreId='',appId){
+  const target=appId||activeApparatus;
+  return apps.some(a=>a.id!==ignoreId&&a.appointmentDate===date&&a.appointmentTime===time&&a.status!=='cancelled'&&appOf(a)===target);
 }
 function findNearestSlot(ignoreId=''){
   const base=new Date();
@@ -486,21 +488,23 @@ function findNearestSlot(ignoreId=''){
    Без бажаної дати — найближчий вільний робочий слот.
    З бажаною датою — перший вільний слот починаючи з цієї дати. */
 function todayISO(){return new Date().toISOString().slice(0,10)}
-function findSlotFrom(fromDate,ignoreId=''){
+function findSlotFrom(fromDate,appId,ignoreId='',fromTime=''){
   let start=fromDate&&fromDate>=todayISO()?fromDate:todayISO();
   const startD=new Date(start+'T00:00:00');
   for(let day=0;day<60;day++){
     const d=new Date(startD);
     d.setDate(startD.getDate()+day);
     const date=d.toISOString().slice(0,10);
-    for(const time of generateTimes()){
+    for(const time of generateTimes(appId)){
+      /* першого дня шукаємо не раніше за обраний пацієнтом час */
+      if(day===0&&fromTime&&time<fromTime) continue;
       if(!isWorkingSlot(date,time)) continue;
       if(date===todayISO()){
         const [h,m]=time.split(':').map(Number);
         const c=new Date(); c.setHours(h,m,0,0);
         if(c<=new Date()) continue;
       }
-      if(!isBookedSlot(date,time,ignoreId)) return {date,time};
+      if(!isBookedSlot(date,time,ignoreId,appId)) return {date,time};
     }
   }
   return null;
@@ -509,7 +513,16 @@ function autoScheduleNew(){
   let changed=false;
   apps.forEach(a=>{
     if(a.status!=='new'||a.appointmentDate) return;
-    const slot=findSlotFrom(a.desiredDate);
+    const appId=appOf(a);
+    let slot=null;
+    /* якщо пацієнт обрав конкретний час і він вільний — записуємо точно туди */
+    if(a.desiredDate&&a.desiredTime&&a.desiredDate>=todayISO()
+       &&isWorkingSlot(a.desiredDate,a.desiredTime)
+       &&!isBookedSlot(a.desiredDate,a.desiredTime,'',appId)){
+      slot={date:a.desiredDate,time:a.desiredTime};
+    }else{
+      slot=findSlotFrom(a.desiredDate,appId,'',a.desiredTime||'');
+    }
     if(slot){
       a.appointmentDate=slot.date;
       a.appointmentTime=slot.time;
@@ -682,22 +695,33 @@ function getDaySettings(date){
   return workingSlots[date];
 }
 function saveSchedule(){localStorage.setItem(SCHEDULE_STORE,JSON.stringify(workingSlots))}
-function generateTimes(){
-  const arr=[];
-  for(let h=7;h<=20;h++){
-    for(const m of [0,30]){
-      if(h===20 && m===30) continue;
-      arr.push(`${pad(h)}:${pad(m)}`);
-    }
+let activeApparatus='xray';
+function generateTimes(appId){
+  const step=(typeof apparatusById==='function')?apparatusById(appId||activeApparatus).step:30;
+  const times=[];
+  for(let m=7*60;m<20*60;m+=step){
+    times.push(String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'));
   }
-  return arr;
+  return times;
 }
-function slotState(date,time){
-  const booked=apps.find(a=>a.appointmentDate===date && a.appointmentTime===time && a.status!=='cancelled');
-  if(booked) return {type:'busy',app:booked};
-  const settings=getDaySettings(date);
-  const work = time in settings ? settings[time] : defaultWorkFor(time);
-  return {type:work?'work':'off'};
+function appOf(a){
+  if(a.apparatus) return a.apparatus;
+  return (typeof apparatusForStudyTitle==='function')?apparatusForStudyTitle(a.study):'xray';
+}
+function renderApparatusTabs(){
+  const box=document.getElementById('apparatusTabs');
+  if(!box||typeof APPARATUS==='undefined') return;
+  box.innerHTML=APPARATUS.map(ap=>
+    `<button type="button" onclick="activeApparatus='${ap.id}';renderApparatusTabs();renderCalendar()"
+      style="padding:9px 16px;border-radius:11px;border:1.5px solid ${activeApparatus===ap.id?'#556349':'#cfd4c8'};
+      background:${activeApparatus===ap.id?'#556349':'#fff'};color:${activeApparatus===ap.id?'#fff':'#3c4a30'};
+      font:inherit;font-weight:800;cursor:pointer">${ap.name} · ${ap.step} хв</button>`).join('');
+}
+function slotState(date,time,appId){
+  const target=appId||activeApparatus;
+  const a=apps.find(x=>x.appointmentDate===date&&x.appointmentTime===time&&x.status!=='cancelled'&&appOf(x)===target);
+  if(a) return {type:'busy',app:a};
+  return {type:isWorkingSlot(date,time)?'work':'off'};
 }
 function weekStartOf(dateStr){
   const d=new Date((dateStr||new Date().toISOString().slice(0,10))+'T00:00:00');
@@ -713,7 +737,7 @@ function renderCalendar(){
   const today=new Date().toISOString().slice(0,10);
   let html='<div class="week-grid"><div></div>'+days.map((d,i)=>
     `<div class="wg-head${d===today?' today':''}">${dayNames[i]}<small>${d.slice(8,10)}.${d.slice(5,7)}</small></div>`).join('');
-  for(const time of generateTimes()){
+  for(const time of generateTimes(activeApparatus)){
     html+=`<div class="wg-time">${time}</div>`;
     for(const date of days){
       const st=slotState(date,time);
@@ -840,11 +864,11 @@ renderPriceEditor();
   }
   window.toggleWorkDay=function(d){
     workHours.days.includes(d)?workHours.days=workHours.days.filter(x=>x!==d):workHours.days.push(d);
-    saveWorkHours();drawDays();flashSaved();renderCalendar();render();
+    saveWorkHours();if(typeof syncSetHours==='function')syncSetHours(workHours);drawDays();flashSaved();renderCalendar();render();
   };
   function flashSaved(){const el=document.getElementById('whSaved');el.style.display='block';setTimeout(()=>el.style.display='none',1500)}
-  start.addEventListener('change',()=>{workHours.start=start.value;saveWorkHours();flashSaved();renderCalendar();render()});
-  end.addEventListener('change',()=>{workHours.end=end.value;saveWorkHours();flashSaved();renderCalendar();render()});
+  start.addEventListener('change',()=>{workHours.start=start.value;saveWorkHours();if(typeof syncSetHours==='function')syncSetHours(workHours);flashSaved();renderCalendar();render()});
+  end.addEventListener('change',()=>{workHours.end=end.value;saveWorkHours();if(typeof syncSetHours==='function')syncSetHours(workHours);flashSaved();renderCalendar();render()});
   drawDays();
 })();
 
@@ -913,7 +937,7 @@ async function syncPull(manual){
     const local=apps.find(a=>a.id===r.id||a.sid===r.id);
     if(!local){
       apps.push({id:r.id,sid:r.id,name:r.name,phone:r.phone,category:r.category,
-        study:r.study,desiredDate:r.desiredDate,comment:r.comment,
+        study:r.study,desiredDate:r.desiredDate,comment:r.comment,apparatus:r.apparatus||'',
         status:r.status||'new',appointmentDate:r.appointmentDate||'',appointmentTime:r.appointmentTime||'',
         createdAt:r.createdAt});
       added++;
@@ -1009,6 +1033,7 @@ function siteSaved(){const m=document.getElementById('siteMsg');m.style.display=
 function resetSiteEditor(){if(confirm('Повернути стандартні тексти головної?')){resetSiteContent();siteData=getSiteContent();renderSiteEditor()}}
 if(siteData)renderSiteEditor();
 
+renderApparatusTabs();
 autoScheduleNew();
 render();
 renderCalendar();
