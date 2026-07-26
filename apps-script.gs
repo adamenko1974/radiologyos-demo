@@ -35,7 +35,7 @@ function activeAdmin_() {
 }
 
 var HEADERS = ['ID','Створено','Пацієнт','Телефон','Категорія',
-               'Дослідження','Бажана дата','Коментар','Статус','Дата запису','Час запису','Апарат'];
+               'Дослідження','Бажана дата','Коментар','Статус','Дата запису','Час запису','Апарат','Джерело'];
 
 function sheet_() {
   var sh = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
@@ -55,6 +55,7 @@ function doPost(e) {
     if (data.action === 'setHours') return handleSetHours_(data);
     if (data.action === 'setApparatus') return handleSetApparatus_(data);
     if (data.action === 'feedback') return handleFeedback_(data);
+    if (data.action === 'setPublic') return handleSetPublic_(data);
     return handleSubmit_(data);
   } catch (err) {
     return ContentService.createTextOutput('error');
@@ -76,7 +77,8 @@ function handleSubmit_(data) {
     String(data.desiredDate || '').slice(0, 20),
     String(data.comment || '').slice(0, 500),
     'new', '', '',
-    String(data.apparatus || '').slice(0, 10)
+    String(data.apparatus || '').slice(0, 10),
+    String(data.source || '').slice(0, 50)
   ]);
   MailApp.sendEmail({
     to: activeAdmin_(),
@@ -154,10 +156,21 @@ function handleFeedback_(data) {
   return ContentService.createTextOutput('ok');
 }
 
+function handleSetPublic_(data) {
+  if (data.token !== SYNC_TOKEN) return ContentService.createTextOutput('denied');
+  PropertiesService.getScriptProperties().setProperty('public_config', JSON.stringify(data.config || {}));
+  return ContentService.createTextOutput('ok');
+}
+
 function doGet(e) {
   if (!e.parameter || e.parameter.token !== SYNC_TOKEN) {
     return ContentService.createTextOutput('denied');
   }
+  if (e.parameter.action === 'public') {
+    var pc = PropertiesService.getScriptProperties().getProperty('public_config');
+    return ContentService.createTextOutput(pc || '{}').setMimeType(ContentService.MimeType.JSON);
+  }
+
   if (e.parameter.action === 'busy') {
     /* Публічно-безпечна відповідь для вибору часу пацієнтом:
        лише зайняті слоти і графік, жодних імен чи телефонів. */

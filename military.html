@@ -601,6 +601,7 @@ document.getElementById('militaryRequestForm').addEventListener('submit', event 
     category: 'Військовослужбовець',
     studies: militaryCart.map(item => item.name).join('; '),
     desiredDate: dateISO || '',
+    source: (typeof getTrafficSource === 'function') ? getTrafficSource() : '',
     apparatus: (typeof apparatusForCode === 'function' && militaryCart.some(x => apparatusForCode(x.code) === 'ct')) ? 'ct' : 'xray',
     comment: [_ps.time ? 'Обраний час: ' + _ps.time : '', commentFull].filter(Boolean).join('. ')
   });

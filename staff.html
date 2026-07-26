@@ -28,6 +28,7 @@ header{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;
 .layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:18px;margin-top:18px}
 .sidebar,.panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow)}
 .sidebar{padding:14px;height:max-content;position:sticky;top:18px}
+.nav-sec{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8a927f;padding:14px 13px 4px}
 .nav-btn{width:100%;border:0;background:transparent;border-radius:14px;padding:13px;text-align:left;font-weight:700;color:#445047;margin:2px 0}
 .nav-btn.active,.nav-btn:hover{background:#eef2eb;color:var(--green)}
 .content{min-width:0}
@@ -188,11 +189,15 @@ tr.row-done td{background:#fafafa;color:#6b716c}
 
 <div class="layout">
   <aside class="sidebar">
+    <div class="nav-sec">Робота</div>
     <button class="nav-btn active" data-view="applications">Заявки</button>
     <button class="nav-btn" data-view="queue">Черга на сьогодні</button>
     <button class="nav-btn" data-view="schedule">Розклад</button>
+    <div class="nav-sec">Контент</div>
     <button class="nav-btn" data-view="pricelist">Прайс</button>
     <button class="nav-btn" data-view="department">Відділення</button>
+    <div class="nav-sec">Система</div>
+    <button class="nav-btn" data-view="comms">Комунікації та оплата</button>
     <button class="nav-btn" data-view="settings">Налаштування</button>
     <button class="nav-btn" id="syncBtn" onclick="syncPull(true)" style="color:#4f5d3e">↻ Оновити з таблиці</button>
   </aside>
@@ -309,6 +314,32 @@ tr.row-done td{background:#fafafa;color:#6b716c}
       </div>
     </section>
 
+        <section id="commsView" class="hidden">
+      <div class="panel queue">
+        <h2>Канали зв'язку з пацієнтами</h2>
+        <p style="color:#667062;font-size:13px">Ці контакти й посилання показуються пацієнтам на сайті. Зберігаються у скрипті Google — діють для всіх відвідувачів одразу.</p>
+        <div id="commsEditor"></div>
+      </div>
+      <div class="panel queue">
+        <h2>Оплата (ПриватБанк)</h2>
+        <p style="color:#667062;font-size:13px">Вставте посилання зі сторінки оплати, яку надала бухгалтерія (адреса, куди веде їхній QR-код). Пацієнт на екрані «Заявку прийнято» побачить кнопку «Оплатити» і такий самий QR.</p>
+        <input id="payLinkInput" placeholder="https://pay.privat24.ua/…" style="width:100%;padding:11px;border:1px solid #cfd4c8;border-radius:11px;font:inherit;box-sizing:border-box">
+        <div id="payQrPreview" style="margin-top:12px"></div>
+      </div>
+      <div class="panel queue">
+        <h2>Рекламні канали</h2>
+        <p style="color:#667062;font-size:13px">Додавайте до посилань на сайт мітку <b>?src=назва</b> (напр. <b>?src=facebook</b>, <b>?src=qr-dveri</b>) — джерело кожної заявки з'явиться у колонці «Джерело» Google Таблиці. Так видно, який канал приводить пацієнтів.</p>
+        <div id="srcLinksHelp" style="font-size:13px;background:#f4f5f0;border-radius:11px;padding:11px 13px;line-height:1.7"></div>
+      </div>
+      <div class="panel queue">
+        <h2>Ролі та етапи процедури</h2>
+        <p style="color:#667062;font-size:13px">Хто відповідає за кожен етап. Лікар з етапу «Опис» автоматично підставляється у форму протоколу.</p>
+        <div id="rolesEditor"></div>
+      </div>
+      <button class="btn btn-primary" onclick="saveComms()" style="margin-top:6px">Зберегти й опублікувати</button>
+      <p id="commsMsg" style="font-size:13px;display:none"></p>
+    </section>
+
     <section id="settingsView" class="hidden">
       <div class="panel queue">
         <h2>Графік роботи відділення</h2>
@@ -411,6 +442,7 @@ tr.row-done td{background:#fafafa;color:#6b716c}
 <script src="assets/pricelist.js"></script>
 <script src="assets/department.js"></script>
 <script src="assets/notify.js"></script>
+<script src="assets/qrgen.js"></script>
 <script>
 
 /* --- Вхід для персоналу ---
@@ -830,7 +862,7 @@ function openProtocol(id){
   document.getElementById('protDesc').value=a.protocol?.desc||'';
   document.getElementById('protConclusion').value=a.protocol?.conclusion||'';
   document.getElementById('protRecs').value=a.protocol?.recs||'';
-  document.getElementById('protDoctor').value=a.protocol?.doctor||localStorage.getItem('radiologyos_last_doctor')||'';
+  document.getElementById('protDoctor').value=a.protocol?.doctor||commsData['role_doctor']||localStorage.getItem('radiologyos_last_doctor')||'';
   protocolModal.classList.add('open');
 }
 function closeProtocol(){protocolModal.classList.remove('open')}
@@ -1136,6 +1168,73 @@ function apparatusDayInfo(appId,dateISO){
   return {available:true,who:st.roster[dow]||''};
 }
 renderApparatusEditor();
+
+
+/* --- Комунікації, оплата, ролі --- */
+const COMMS_STORE='radiologyos_comms_v1';
+const COMMS_FIELDS=[
+  ['whatsapp','WhatsApp (номер, лише цифри)','380972808899'],
+  ['viber','Viber (номер, лише цифри)','380972808899'],
+  ['telegram','Telegram (посилання або @нік)',''],
+  ['email','Email реєстратури',''],
+  ['facebook','Сторінка Facebook',''],
+  ['instagram','Сторінка Instagram',''],
+];
+const ROLE_STAGES=[
+  ['registrar','1. Приймання заявки (реєстратор)'],
+  ['laborant','2. Виконання дослідження (рентгенлаборант)'],
+  ['doctor','3. Опис знімків (лікар-рентгенолог)'],
+];
+let commsData=(()=>{try{return JSON.parse(localStorage.getItem(COMMS_STORE)||'{}')}catch(e){return{}}})();
+
+function renderComms(){
+  const inp='width:100%;padding:10px;border:1px solid #cfd4c8;border-radius:10px;font:inherit;box-sizing:border-box';
+  document.getElementById('commsEditor').innerHTML=COMMS_FIELDS.map(([k,label,ph])=>`
+    <div class="field" style="margin:8px 0">
+      <label style="font-size:12px;font-weight:700">${label}</label>
+      <input value="${esc(commsData[k]||'')}" placeholder="${ph}" onchange="commsData['${k}']=this.value.trim()" style="${inp}">
+    </div>`).join('');
+  document.getElementById('payLinkInput').value=commsData.payLink||'';
+  const staffOpts=(staffData||[]).map(p=>p.name||p.role).filter(Boolean);
+  document.getElementById('rolesEditor').innerHTML=ROLE_STAGES.map(([k,label])=>`
+    <div class="field" style="margin:8px 0">
+      <label style="font-size:12px;font-weight:700">${label}</label>
+      <select onchange="commsData['role_${k}']=this.value" style="${inp}">
+        <option value="">— не призначено —</option>
+        ${staffOpts.map(n=>`<option ${commsData['role_'+k]===n?'selected':''}>${esc(n)}</option>`).join('')}
+      </select>
+    </div>`).join('');
+  const base=location.origin+location.pathname.replace('staff.html','');
+  document.getElementById('srcLinksHelp').innerHTML=
+    ['facebook','instagram','viber-group','qr-dveri'].map(x=>`${x}: <b>${base}?src=${x}</b>`).join('<br>');
+  renderPayQr();
+}
+function renderPayQr(){
+  const box=document.getElementById('payQrPreview');
+  const link=document.getElementById('payLinkInput').value.trim();
+  if(!link){box.innerHTML='<span style="color:#8a927f;font-size:13px">Посилання не задано — блок оплати пацієнтам не показується.</span>';return}
+  try{
+    const qr=qrcode(0,'M');qr.addData(link);qr.make();
+    box.innerHTML='<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">'+qr.createImgTag(4,8)+
+      '<div style="font-size:13px;color:#556050">Перевірте: відскануйте телефоном —<br>має відкритись сторінка оплати Привату.</div></div>';
+  }catch(e){box.innerHTML='<span style="color:#9b3b32;font-size:13px">Не вдалося побудувати QR — перевірте посилання.</span>'}
+}
+document.getElementById('payLinkInput')?.addEventListener('change',()=>{commsData.payLink=document.getElementById('payLinkInput').value.trim();renderPayQr()});
+function saveComms(){
+  localStorage.setItem(COMMS_STORE,JSON.stringify(commsData));
+  if(typeof syncSetPublic==='function') syncSetPublic({
+    whatsapp:commsData.whatsapp||'',viber:commsData.viber||'',telegram:commsData.telegram||'',
+    email:commsData.email||'',facebook:commsData.facebook||'',instagram:commsData.instagram||'',
+    payLink:commsData.payLink||''
+  });
+  const m=document.getElementById('commsMsg');
+  m.textContent=NOTIFY_ENDPOINT?'✓ Збережено й опубліковано для пацієнтів':'✓ Збережено локально (зв\u2019язок з Google не налаштовано — пацієнти не побачать)';
+  m.style.color=NOTIFY_ENDPOINT?'#2f5c2a':'#8a5b00';m.style.display='block';
+  setTimeout(()=>m.style.display='none',3500);
+}
+renderComms();
+
+/* лікар з ролей → у форму протоколу за замовчуванням */
 
 renderApparatusTabs();
 autoScheduleNew();

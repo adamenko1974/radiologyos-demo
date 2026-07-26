@@ -360,6 +360,12 @@ nav{margin-left:auto;display:flex;align-items:center;gap:12px;flex-shrink:0;font
       <div class="success-summary" id="successSummary"></div>
       <p id="successText">Реєстратура опрацює заявку та зателефонує вам для підтвердження дати й часу. Стежити за статусом можна в особистому кабінеті за номером телефону.</p>
       <p class="cart-note offline-note" id="offlineNote" hidden><strong>Увага:</strong> онлайн-передача заявок тимчасово не працює. Будь ласка, зателефонуйте в реєстратуру: <a href="tel:+380972808899"><strong>+380 97 280 88 99</strong></a></p>
+      <div id="payBlock" hidden style="border:1px solid #e0d9b8;background:#fdfaf0;border-radius:14px;padding:14px;margin:0 0 12px;text-align:center">
+        <div style="font-weight:700;font-size:14px;margin-bottom:8px">Оплата дослідження</div>
+        <div id="payQr" style="display:flex;justify-content:center;margin-bottom:8px"></div>
+        <a id="payBtn" class="btn send-request" href="#" target="_blank" rel="noopener" style="background:#3f7a3a">Оплатити (ПриватБанк)</a>
+        <p style="font-size:12px;color:#8a8461;margin:8px 0 0">Скануйте QR або натисніть кнопку. Квитанцію збережіть чи покажіть у реєстратурі.</p>
+      </div>
       <a class="btn send-request" href="cabinet.html" style="margin-bottom:8px">Особистий кабінет</a>
       <button class="btn send-request" type="button" onclick="closeCart()" style="background:#eef1e9;color:#3c4a30">Готово</button>
     </div>
@@ -386,6 +392,7 @@ nav{margin-left:auto;display:flex;align-items:center;gap:12px;flex-shrink:0;font
 })();
 </script>
 <script src="assets/notify.js"></script>
+<script src="assets/qrgen.js"></script>
 <script src="assets/slots.js"></script>
 <script src="assets/cart.js" defer></script>
 </body>
