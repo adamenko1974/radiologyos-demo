@@ -204,6 +204,7 @@ requestForm?.addEventListener('submit', e => {
     studies: cart.map(x => x.name).join('; '),
     desiredDate: dateISO,
     apparatus: cartApparatus(),
+    source: (typeof getTrafficSource === 'function') ? getTrafficSource() : '',
     comment: [pickedSlot.time ? 'Обраний час: ' + pickedSlot.time : '', commentFull].filter(Boolean).join('. ')
   });
 
@@ -224,6 +225,7 @@ function showSuccess(summary) {
   if (off) off.hidden = !!(typeof NOTIFY_ENDPOINT !== 'undefined' && NOTIFY_ENDPOINT);
   requestForm.hidden = true;
   document.getElementById('successPanel').hidden = false;
+  showPaymentBlock();
   document.querySelector('.cart-total').style.display = 'none';
   document.getElementById('cartItems').style.display = 'none';
   cart = [];
@@ -253,3 +255,27 @@ const _dd = document.getElementById('desiredDate');
 if (_dd) _dd.min = new Date().toISOString().slice(0, 10);
 
 renderCart();
+
+/* Блок оплати для платних (цивільних) заявок: посилання з панелі персоналу */
+async function showPaymentBlock() {
+  const block = document.getElementById('payBlock');
+  if (!block) return;
+  let link = '', qrData = '';
+  if (typeof fetchPublicConfig === 'function') {
+    const cfg = await fetchPublicConfig();
+    if (cfg && cfg.payLink) { link = cfg.payLink; qrData = cfg.payLink; }
+  }
+  if (!link && typeof DEFAULT_PAY_LINK !== 'undefined' && DEFAULT_PAY_LINK) {
+    link = DEFAULT_PAY_LINK;
+    qrData = (typeof DEFAULT_PAY_LINK_RAW !== 'undefined') ? DEFAULT_PAY_LINK_RAW : DEFAULT_PAY_LINK;
+  }
+  if (!link) return;
+  document.getElementById('payBtn').href = link;
+  try {
+    const qr = qrcode(0, 'M');
+    qr.addData(qrData);
+    qr.make();
+    document.getElementById('payQr').innerHTML = qr.createImgTag(4, 6);
+  } catch (e) { document.getElementById('payQr').innerHTML = ''; }
+  block.hidden = false;
+}
