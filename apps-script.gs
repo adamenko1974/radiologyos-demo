@@ -54,6 +54,7 @@ function doPost(e) {
     if (data.action === 'setAdmin') return handleSetAdmin_(data);
     if (data.action === 'setHours') return handleSetHours_(data);
     if (data.action === 'setApparatus') return handleSetApparatus_(data);
+    if (data.action === 'feedback') return handleFeedback_(data);
     return handleSubmit_(data);
   } catch (err) {
     return ContentService.createTextOutput('error');
@@ -123,6 +124,33 @@ function handleSetHours_(data) {
 function handleSetApparatus_(data) {
   if (data.token !== SYNC_TOKEN) return ContentService.createTextOutput('denied');
   PropertiesService.getScriptProperties().setProperty('apparatus_avail', JSON.stringify(data.availability || {}));
+  return ContentService.createTextOutput('ok');
+}
+
+function handleFeedback_(data) {
+  if (!data.message) return ContentService.createTextOutput('skip');
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName('Звернення');
+  if (!sh) {
+    sh = ss.insertSheet('Звернення');
+    sh.appendRow(['Дата/час', 'Тип', 'Повідомлення', 'Ім\'я', 'Телефон']);
+    sh.getRange(1, 1, 1, 5).setFontWeight('bold');
+    sh.setFrozenRows(1);
+  }
+  sh.appendRow([
+    new Date(),
+    String(data.type || 'звернення').slice(0, 30),
+    String(data.message).slice(0, 2000),
+    String(data.name || '').slice(0, 100),
+    String(data.phone || '').slice(0, 30)
+  ]);
+  MailApp.sendEmail({
+    to: activeAdmin_(),
+    subject: '📝 ' + (data.type || 'Звернення') + ' з сайту відділення',
+    body: 'Тип: ' + (data.type || '—') + '\n' +
+          'Від: ' + (data.name || 'анонімно') + (data.phone ? ' (' + data.phone + ')' : '') + '\n\n' +
+          data.message + '\n\nЖурнал: ' + ss.getUrl()
+  });
   return ContentService.createTextOutput('ok');
 }
 

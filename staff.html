@@ -824,7 +824,9 @@ const protocolModal=document.getElementById('protocolModal');
 function openProtocol(id){
   const a=apps.find(x=>x.id===id); if(!a) return;
   document.getElementById('protAppId').value=id;
-  document.getElementById('protInfo').value=`${a.name} — ${a.study}`;
+  const nkCode=(function(){try{for(const g of getPricelist())for(const it of g.items)if(it.title===a.study)return it.nk||''}catch(e){}return ''})();
+  document.getElementById('protInfo').value=`${a.name} — ${a.study}${nkCode?' · eHealth '+nkCode:''}`;
+  document.getElementById('protAppId').dataset.nk=nkCode;
   document.getElementById('protDesc').value=a.protocol?.desc||'';
   document.getElementById('protConclusion').value=a.protocol?.conclusion||'';
   document.getElementById('protRecs').value=a.protocol?.recs||'';
@@ -845,6 +847,7 @@ document.getElementById('protocolForm').addEventListener('submit',e=>{
   }
   a.protocol={
     number:a.protocol?.number||`РД-${year}-${String(counter[year]).padStart(3,'0')}`,
+    nk:document.getElementById('protAppId').dataset.nk||a.protocol?.nk||'',
     desc:document.getElementById('protDesc').value.trim(),
     conclusion:document.getElementById('protConclusion').value.trim(),
     recs:document.getElementById('protRecs').value.trim(),
@@ -871,7 +874,10 @@ function renderPriceEditor(){
      </div>
      ${g.items.map((it,ii)=>`
        <div style="display:grid;grid-template-columns:64px 1fr 92px 32px;gap:7px;margin:7px 0;align-items:start">
-         <input value="${esc(it.code)}" onchange="priceData[${gi}].items[${ii}].code=this.value;persistPrices()" style="padding:8px;border:1px solid #cfd4c8;border-radius:8px">
+         <div>
+           <input value="${esc(it.code)}" title="Внутрішній код" onchange="priceData[${gi}].items[${ii}].code=this.value;persistPrices()" style="width:100%;padding:8px;border:1px solid #cfd4c8;border-radius:8px">
+           <input value="${esc(it.nk||'')}" placeholder="eHealth" title="Код інтервенції eHealth (підтверджує лікар)" onchange="priceData[${gi}].items[${ii}].nk=this.value;persistPrices()" style="width:100%;margin-top:5px;padding:7px;border:1px dashed #9ca893;border-radius:8px;font-size:11px">
+         </div>
          <div>
            <input value="${esc(it.title)}" onchange="priceData[${gi}].items[${ii}].title=this.value;persistPrices()" style="width:100%;padding:8px;border:1px solid #cfd4c8;border-radius:8px">
            <textarea rows="1" placeholder="Що входить" onchange="priceData[${gi}].items[${ii}].help=this.value;persistPrices()" style="width:100%;margin-top:5px;padding:8px;border:1px solid #cfd4c8;border-radius:8px;font:inherit;font-size:12px;resize:vertical">${esc(it.help)}</textarea>

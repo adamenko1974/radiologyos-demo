@@ -67,6 +67,12 @@ h2 .sec-icon svg{width:18px;height:18px}
 
 .cta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
 @media(max-width:640px){.cta{grid-template-columns:1fr}}
+.fb-row select{width:100%}
+.fb-contacts{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px}
+@media(max-width:520px){.fb-contacts{grid-template-columns:1fr}}
+.btn-fb{width:100%;margin-top:11px;min-height:48px;border:0;border-radius:13px;background:var(--olive);color:#fff;font:inherit;font-weight:800;cursor:pointer}
+.nszu-note{margin-top:14px;padding-top:13px;border-top:1px solid var(--line);font-size:13px;color:#556050;line-height:1.55}
+.nszu-note a{color:#3c4a30;font-weight:700}
 .cta a{display:grid;place-items:center;min-height:52px;border-radius:14px;font-weight:800}
 .cta .primary{background:var(--olive);color:#fff}
 .cta .secondary{background:#f4e8cf;color:#5a4c2c}
@@ -117,6 +123,36 @@ h2 .sec-icon svg{width:18px;height:18px}
     <div class="card" id="staffList"></div>
   </section>
 
+  <section>
+    <h2><span class="sec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/></svg></span>Звернення та відгуки</h2>
+    <div class="card">
+      <form id="feedbackForm">
+        <div class="fb-row">
+          <select id="fbType" style="padding:11px;border:1px solid #cfd4c8;border-radius:11px;font:inherit">
+            <option>Подяка</option>
+            <option>Пропозиція</option>
+            <option selected>Звернення</option>
+            <option>Скарга</option>
+          </select>
+        </div>
+        <textarea id="fbMessage" required rows="3" placeholder="Опишіть ситуацію або залиште відгук про роботу відділення"
+          style="width:100%;margin-top:9px;padding:11px;border:1px solid #cfd4c8;border-radius:11px;font:inherit;resize:vertical;box-sizing:border-box"></textarea>
+        <div class="fb-contacts">
+          <input id="fbName" placeholder="Ім'я (необов'язково)" style="padding:11px;border:1px solid #cfd4c8;border-radius:11px;font:inherit"/>
+          <input id="fbPhone" placeholder="Телефон (необов'язково)" inputmode="tel" style="padding:11px;border:1px solid #cfd4c8;border-radius:11px;font:inherit"/>
+        </div>
+        <button class="btn-fb" type="submit">Надіслати</button>
+        <p id="fbOk" hidden style="color:#2f5c2a;font-size:14px;margin:10px 0 0">✓ Дякуємо! Звернення передано керівництву відділення.</p>
+        <p id="fbOffline" hidden style="color:#8a5b00;font-size:13px;margin:10px 0 0;background:#fdf3e4;border-radius:10px;padding:10px 12px">Онлайн-надсилання тимчасово недоступне. Зателефонуйте в реєстратуру: <a href="tel:+380972808899" style="color:#5a4c2c;font-weight:700">+380 97 280 88 99</a></p>
+      </form>
+      <div class="nszu-note">
+        <strong>Офіційні канали НСЗУ.</strong> Якщо питання стосується безоплатних послуг за Програмою медичних гарантій, ви також можете звернутися до Національної служби здоров'я України: контакт-центр <a href="tel:1677"><strong>16-77</strong></a> або <a href="https://edata.e-health.gov.ua/e-data/dashboard/complaints" target="_blank" rel="noopener">дашборд опрацювання звернень НСЗУ</a>.
+        <br/><br/>
+        <strong>Маєте електронне направлення?</strong> Заклади, де дослідження виконуються безоплатно за Програмою медичних гарантій, можна знайти на <a href="https://edata.e-health.gov.ua/e-data/dashboard/pmg-services-map" target="_blank" rel="noopener">електронній карті місць надання послуг НСЗУ</a> — пошук працює за кодом направлення або кодом інтервенції (він указаний у нашому протоколі дослідження).
+      </div>
+    </div>
+  </section>
+
   <section class="cta">
     <a class="primary" href="price.html">Подати заявку на дослідження</a>
     <a class="secondary" href="cabinet.html">Особистий кабінет пацієнта</a>
@@ -126,6 +162,7 @@ h2 .sec-icon svg{width:18px;height:18px}
 
 <script src="assets/pricelist.js"></script>
 <script src="assets/department.js"></script>
+<script src="assets/notify.js"></script>
 <script>
 const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 
@@ -159,6 +196,22 @@ document.getElementById('staffList').innerHTML = getStaffList().map(p => `
     </div>
     ${p.schedule ? `<span class="sched">${esc(p.schedule)}</span>` : ''}
   </div>`).join('');
+
+/* Звернення та відгуки */
+document.getElementById('feedbackForm')?.addEventListener('submit', e => {
+  e.preventDefault();
+  const msg = document.getElementById('fbMessage').value.trim();
+  if (!msg) return;
+  const sent = (typeof sendFeedback === 'function') && sendFeedback({
+    type: document.getElementById('fbType').value,
+    message: msg,
+    name: document.getElementById('fbName').value.trim(),
+    phone: document.getElementById('fbPhone').value.trim()
+  });
+  document.getElementById('fbOk').hidden = !sent;
+  document.getElementById('fbOffline').hidden = sent;
+  if (sent) { document.getElementById('feedbackForm').reset(); }
+});
 </script>
 </body>
 </html>

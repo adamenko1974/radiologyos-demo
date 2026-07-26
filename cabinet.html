@@ -132,6 +132,7 @@ header{padding:0 14px;margin-bottom:18px}
       За цим номером заявок не знайдено.<br/>
       <a href="price.html" style="color:#3c4a30;font-weight:700">Подати заявку →</a>
     </div>
+    <p class="hint" style="margin-top:14px"><a href="about.html#feedbackForm" style="color:#3c4a30;font-weight:700">Залишити відгук чи звернення →</a></p>
     <p class="hint">Кабінет працює на цьому пристрої: тут відображаються заявки, подані з цього браузера, та протоколи, оформлені відділенням у демонстраційному режимі.</p>
   </div>
 
@@ -200,7 +201,7 @@ function renderApps(digits) {
           <h4>Протокол променевого дослідження ${p.number ? '№ ' + esc(p.number) : ''}</h4>
           <div class="p-org">Чернігівський військовий госпіталь · Відділення променевої діагностики</div>
           <div class="p-field"><b>Пацієнт</b><div>${esc(a.name)}</div></div>
-          <div class="p-field"><b>Дослідження</b><div>${esc(a.study)}</div></div>
+          <div class="p-field"><b>Дослідження</b><div>${esc(a.study)}${p.nk ? ' · код інтервенції eHealth: ' + esc(p.nk) : ''}</div></div>
           <div class="p-field"><b>Опис</b><div>${esc(p.desc || '—')}</div></div>
           <div class="p-field"><b>Висновок</b><div>${esc(p.conclusion || '—')}</div></div>
           ${p.recs ? `<div class="p-field"><b>Рекомендації</b><div>${esc(p.recs)}</div></div>` : ''}
