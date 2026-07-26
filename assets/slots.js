@@ -34,17 +34,42 @@ async function initSlotPicker({ container, apparatus, onPick }) {
     avail = apparatusAvailabilityPublic(); /* локальний стан (той самий пристрій) */
   }
 
-  /* апарат вимкнено повністю */
-  if (avail && avail[apparatus] && avail[apparatus].active === false) {
+
+  /* Машини потрібного типу (пацієнт бачить тип; вільно = вільна БУДЬ-ЯКА машина типу) */
+  const unitsAvail = {}; /* unitId -> {days:[...]} лише активні машини типу */
+  if (avail) {
+    Object.keys(avail).forEach(id => {
+      const u = avail[id];
+      if ((u.type || id) === apparatus && u.active !== false) unitsAvail[id] = { days: u.days || [] };
+    });
+  } else if (typeof unitsOfType === 'function') {
+    unitsOfType(apparatus).forEach(u => { unitsAvail[u.id] = { days: [0,1,2,3,4,5,6] }; });
+  }
+  const unitIds = Object.keys(unitsAvail);
+
+  /* жодної працюючої машини цього типу */
+  if (unitIds.length === 0) {
     container.innerHTML = '<div class="sp-head">Вільний час — ' + apparatusById(apparatus).name + '</div>' +
       '<div class="sp-empty">На жаль, апарат тимчасово не працює. Залиште заявку з бажаною датою — реєстратура запропонує варіанти, або зателефонуйте.</div>';
     if (onPick) onPick({ date: '', time: '' });
     return;
   }
 
-  const busySet = new Set(busy
-    .filter(b => (b.apparatus || 'xray') === apparatus)
-    .map(b => b.date + ' ' + b.time));
+  /* зайнятість по машинах; легасі-записи ct/xray відносимо до першої машини типу */
+  const legacyFirst = unitIds[0];
+  const busyByUnit = {};
+  unitIds.forEach(id => busyByUnit[id] = new Set());
+  busy.forEach(b => {
+    let id = b.apparatus || '';
+    if (id === 'ct' || id === 'xray') id = (id === apparatus) ? legacyFirst : null;
+    if (id && busyByUnit[id]) busyByUnit[id].add(b.date + ' ' + b.time);
+  });
+
+  function slotFreeOnAnyUnit(iso, t) {
+    const dow = new Date(iso + 'T00:00:00').getDay();
+    return unitIds.some(id =>
+      unitsAvail[id].days.includes(dow) && !busyByUnit[id].has(iso + ' ' + t));
+  }
 
   const pad = n => String(n).padStart(2, '0');
   const todayISO = new Date().toISOString().slice(0, 10);
@@ -52,8 +77,7 @@ async function initSlotPicker({ container, apparatus, onPick }) {
   const times = slotTimesFor(apparatus, hours);
 
   /* 7 днів уперед, лише робочі */
-  const appDays = (avail && avail[apparatus] && Array.isArray(avail[apparatus].days))
-    ? avail[apparatus].days : [0, 1, 2, 3, 4, 5, 6];
+  const appDays = [0, 1, 2, 3, 4, 5, 6].filter(d => unitIds.some(id => unitsAvail[id].days.includes(d)));
   const days = [];
   for (let i = 0; i < 14 && days.length < 7; i++) {
     const d = new Date(); d.setDate(d.getDate() + i);
@@ -66,7 +90,7 @@ async function initSlotPicker({ container, apparatus, onPick }) {
   function freeTimesFor(iso) {
     const now = new Date();
     return times.filter(t => {
-      if (busySet.has(iso + ' ' + t)) return false;
+      if (!slotFreeOnAnyUnit(iso, t)) return false;
       if (iso === todayISO) {
         const [h, m] = t.split(':').map(Number);
         const c = new Date(); c.setHours(h, m, 0, 0);

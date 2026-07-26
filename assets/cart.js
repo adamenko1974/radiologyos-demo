@@ -113,8 +113,18 @@ function pushToStaffPanel({ name, phone, category, studies, desiredDate, desired
         createdAt: new Date().toISOString(),
         sid: sid || '',
         desiredTime: desiredTime || '',
-        apparatus: (code && typeof apparatusForCode === 'function') ? apparatusForCode(code)
-                 : (apparatus || (typeof apparatusForStudyTitle === 'function' ? apparatusForStudyTitle(study) : 'xray'))
+        apparatus: (function () {
+          /* конкретна машина з прайсу, якщо призначена; інакше тип за кодом */
+          try {
+            if (code && typeof getPricelist === 'function') {
+              for (const g of getPricelist())
+                for (const it of g.items)
+                  if (String(it.code) === String(code) && it.equip) return it.equip;
+            }
+          } catch (e) {}
+          return (code && typeof apparatusForCode === 'function') ? apparatusForCode(code)
+               : (apparatus || (typeof apparatusForStudyTitle === 'function' ? apparatusForStudyTitle(study) : 'xray'));
+        })()
       });
     });
     localStorage.setItem(STAFF_STORE, JSON.stringify(apps));

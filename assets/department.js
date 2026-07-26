@@ -16,9 +16,9 @@ const DEFAULT_STAFFLIST = [
 ];
 
 const DEFAULT_EQUIPMENT = [
-  { name: 'Комп\'ютерний томограф', desc: 'Багатозрізова КТ-система для досліджень голови, грудної клітки, черевної порожнини та КТ-ангіографії, з внутрішньовенним контрастуванням і без.' },
-  { name: 'Цифровий рентгенографічний комплекс', desc: 'Рентгенографія всіх анатомічних ділянок у стандартних проекціях з цифровою обробкою зображень.' },
-  { name: 'Цифровий флюорограф', desc: 'Скринінгові дослідження органів грудної клітки з мінімальним дозовим навантаженням.' }
+  { id: 'eq-ct-1', type: 'ct', name: 'Комп\'ютерний томограф', desc: 'Багатозрізова КТ-система для досліджень голови, грудної клітки, черевної порожнини та КТ-ангіографії, з внутрішньовенним контрастуванням і без.' },
+  { id: 'eq-xray-1', type: 'xray', name: 'Цифровий рентгенографічний комплекс', desc: 'Рентгенографія всіх анатомічних ділянок у стандартних проекціях з цифровою обробкою зображень.' },
+  { id: 'eq-xray-2', type: 'xray', name: 'Цифровий флюорограф', desc: 'Скринінгові дослідження органів грудної клітки з мінімальним дозовим навантаженням.' }
 ];
 
 function _getList(key, def) {
@@ -181,6 +181,74 @@ function apparatusAvailabilityPublic(state) {
     out[a.id] = {
       active: st[a.id].active !== false,
       days: [0,1,2,3,4,5,6].filter(d => st[a.id].roster[d] !== 'OFF')
+    };
+  });
+  return out;
+}
+
+/* --- Обладнання як одиниці розкладу ---
+   Кожна машина має тип (ct → 30 хв, xray → 15 хв). Розклад, зміни
+   лаборантів і зайнятість ведуться ПО МАШИНАХ; пацієнт бачить лише тип. */
+function getEquipmentUnits() {
+  const list = getEquipment();
+  let changed = false;
+  list.forEach((e, i) => {
+    if (!e.id) { e.id = 'eq-' + Date.now().toString(36) + '-' + i; changed = true; }
+    if (!e.type) { e.type = /томограф|\bКТ\b/i.test(e.name || '') ? 'ct' : 'xray'; changed = true; }
+  });
+  if (changed) saveEquipment(list);
+  return list;
+}
+function typeForCode(code) { return apparatusForCode(code); }
+function unitById(id) { return getEquipmentUnits().find(e => e.id === id) || null; }
+function unitsOfType(type) { return getEquipmentUnits().filter(e => e.type === type); }
+function stepForUnit(id) {
+  const u = unitById(id);
+  return apparatusById(u ? u.type : 'xray').step;
+}
+function unitLabel(id) {
+  const u = unitById(id);
+  if (!u) return id;
+  return u.name + ' (' + apparatusById(u.type).name + ')';
+}
+
+/* Перевизначення стану під машини (легасі ct/xray мапиться на першу машину типу) */
+function defaultApparatusState() {
+  const st = {};
+  getEquipmentUnits().forEach(u => { st[u.id] = { active: true, roster: {0:'',1:'',2:'',3:'',4:'',5:'',6:''} }; });
+  return st;
+}
+function getApparatusState() {
+  const def = defaultApparatusState();
+  try {
+    const saved = JSON.parse(localStorage.getItem(APPARATUS_STATE_STORE) || 'null');
+    if (saved && typeof saved === 'object') {
+      Object.keys(def).forEach(id => { if (saved[id]) def[id] = Object.assign(def[id], saved[id]); });
+      ['ct', 'xray'].forEach(t => {
+        if (saved[t]) {
+          const first = unitsOfType(t)[0];
+          if (first) def[first.id] = Object.assign(def[first.id], saved[t]);
+        }
+      });
+    }
+  } catch (e) {}
+  return def;
+}
+function apparatusAvailableOn(unitId, dateISO, state) {
+  const st = (state || getApparatusState())[unitId];
+  if (!st || st.active === false) return false;
+  const dow = new Date(dateISO + 'T00:00:00').getDay();
+  return (st.roster || {})[dow] !== 'OFF';
+}
+function apparatusAvailabilityPublic(state) {
+  const st = state || getApparatusState();
+  const out = {};
+  getEquipmentUnits().forEach(u => {
+    const s2 = st[u.id] || { active: true, roster: {} };
+    out[u.id] = {
+      type: u.type,
+      active: s2.active !== false,
+      days: [0, 1, 2, 3, 4, 5, 6].filter(d => (s2.roster || {})[d] !== 'OFF')
     };
   });
   return out;
