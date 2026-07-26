@@ -235,7 +235,7 @@ tr.row-done td{background:#fafafa;color:#6b716c}
       <div class="panel calendar-panel">
         <div class="calendar-head">
           <div>
-            <h2>Розклад кабінету — тиждень</h2>
+            <h2>Розклад — тиждень</h2>
             <p>Клік по вільній клітинці — записати пацієнта. Кнопка ◐ у клітинці — зробити час робочим/неробочим.</p>
             <div id="apparatusTabs" style="display:flex;gap:8px;margin:10px 0"></div>
           </div>
@@ -519,20 +519,33 @@ function autoScheduleNew(){
   let changed=false;
   apps.forEach(a=>{
     if(a.status!=='new'||a.appointmentDate) return;
-    const appId=appOf(a);
-    let slot=null;
-    /* якщо пацієнт обрав конкретний час і він вільний — записуємо точно туди */
-    if(a.desiredDate&&a.desiredTime&&a.desiredDate>=todayISO()
-       &&(typeof apparatusDayInfo!=='function'||apparatusDayInfo(appId,a.desiredDate).available)
-       &&isWorkingSlot(a.desiredDate,a.desiredTime)
-       &&!isBookedSlot(a.desiredDate,a.desiredTime,'',appId)){
-      slot={date:a.desiredDate,time:a.desiredTime};
+    /* кандидати: конкретна машина заявки або всі машини потрібного типу */
+    let units=[];
+    const direct=resolveUnit(a);
+    if(a.apparatus&&typeof unitById==='function'&&unitById(a.apparatus)){
+      units=[a.apparatus];
     }else{
-      slot=findSlotFrom(a.desiredDate,appId,'',a.desiredTime||'');
+      const t=(a.apparatus==='ct'||a.apparatus==='xray')?a.apparatus
+             :(typeof apparatusForStudyTitle==='function'?apparatusForStudyTitle(a.study):'xray');
+      units=(typeof unitsOfType==='function')?unitsOfType(t).map(u=>u.id):(direct?[direct]:[]);
     }
-    if(slot){
-      a.appointmentDate=slot.date;
-      a.appointmentTime=slot.time;
+    let best=null;
+    for(const uid of units){
+      /* точний час пацієнта, якщо вільний на цій машині */
+      if(a.desiredDate&&a.desiredTime&&a.desiredDate>=todayISO()
+         &&(typeof apparatusDayInfo!=='function'||apparatusDayInfo(uid,a.desiredDate).available)
+         &&isWorkingSlot(a.desiredDate,a.desiredTime)
+         &&!isBookedSlot(a.desiredDate,a.desiredTime,'',uid)){
+        best={date:a.desiredDate,time:a.desiredTime,unit:uid};
+        break;
+      }
+      const slot=findSlotFrom(a.desiredDate,uid,'',a.desiredTime||'');
+      if(slot&&(!best||slot.date+slot.time<best.date+best.time)) best={date:slot.date,time:slot.time,unit:uid};
+    }
+    if(best){
+      a.appointmentDate=best.date;
+      a.appointmentTime=best.time;
+      a.apparatus=best.unit;
       a.status='booked';
       changed=true;
       if(typeof syncPushUpdate==='function') syncPushUpdate(a);
@@ -702,27 +715,35 @@ function getDaySettings(date){
   return workingSlots[date];
 }
 function saveSchedule(){localStorage.setItem(SCHEDULE_STORE,JSON.stringify(workingSlots))}
-let activeApparatus='xray';
+let activeApparatus=null; /* id машини; встановлюється після завантаження одиниць */
+function resolveUnit(a){
+  if(!a) return null;
+  const ap=a.apparatus||'';
+  if(typeof unitById==='function'&&unitById(ap)) return ap;
+  const t=(ap==='ct'||ap==='xray')?ap:(typeof apparatusForStudyTitle==='function'?apparatusForStudyTitle(a.study):'xray');
+  const first=(typeof unitsOfType==='function')?unitsOfType(t)[0]:null;
+  return first?first.id:null;
+}
 function generateTimes(appId){
-  const step=(typeof apparatusById==='function')?apparatusById(appId||activeApparatus).step:30;
+  const target=appId||activeApparatus;
+  const step=(typeof stepForUnit==='function'&&target)?stepForUnit(target):30;
   const times=[];
   for(let m=7*60;m<20*60;m+=step){
     times.push(String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'));
   }
   return times;
 }
-function appOf(a){
-  if(a.apparatus) return a.apparatus;
-  return (typeof apparatusForStudyTitle==='function')?apparatusForStudyTitle(a.study):'xray';
-}
+function appOf(a){ return resolveUnit(a); }
 function renderApparatusTabs(){
   const box=document.getElementById('apparatusTabs');
-  if(!box||typeof APPARATUS==='undefined') return;
-  box.innerHTML=APPARATUS.map(ap=>
-    `<button type="button" onclick="activeApparatus='${ap.id}';renderApparatusTabs();renderCalendar()"
-      style="padding:9px 16px;border-radius:11px;border:1.5px solid ${activeApparatus===ap.id?'#556349':'#cfd4c8'};
-      background:${activeApparatus===ap.id?'#556349':'#fff'};color:${activeApparatus===ap.id?'#fff':'#3c4a30'};
-      font:inherit;font-weight:800;cursor:pointer">${ap.name} · ${ap.step} хв</button>`).join('');
+  if(!box||typeof getEquipmentUnits!=='function') return;
+  const units=getEquipmentUnits();
+  if(!activeApparatus||!unitById(activeApparatus)) activeApparatus=units[0]?units[0].id:null;
+  box.innerHTML=units.map(u=>
+    `<button type="button" onclick="activeApparatus='${u.id}';renderApparatusTabs();renderCalendar()"
+      style="padding:9px 14px;border-radius:11px;border:1.5px solid ${activeApparatus===u.id?'#556349':'#cfd4c8'};
+      background:${activeApparatus===u.id?'#556349':'#fff'};color:${activeApparatus===u.id?'#fff':'#3c4a30'};
+      font:inherit;font-weight:800;cursor:pointer;font-size:13px">${esc(u.name)} · ${apparatusById(u.type).step} хв</button>`).join('');
 }
 function slotState(date,time,appId){
   const target=appId||activeApparatus;
@@ -855,7 +876,13 @@ function renderPriceEditor(){
            <input value="${esc(it.title)}" onchange="priceData[${gi}].items[${ii}].title=this.value;persistPrices()" style="width:100%;padding:8px;border:1px solid #cfd4c8;border-radius:8px">
            <textarea rows="1" placeholder="Що входить" onchange="priceData[${gi}].items[${ii}].help=this.value;persistPrices()" style="width:100%;margin-top:5px;padding:8px;border:1px solid #cfd4c8;border-radius:8px;font:inherit;font-size:12px;resize:vertical">${esc(it.help)}</textarea>
          </div>
-         <input type="number" min="0" value="${it.price}" onchange="priceData[${gi}].items[${ii}].price=Number(this.value)||0;persistPrices()" style="padding:8px;border:1px solid #cfd4c8;border-radius:8px">
+         <div>
+           <input type="number" min="0" value="${it.price}" onchange="priceData[${gi}].items[${ii}].price=Number(this.value)||0;persistPrices()" style="width:100%;padding:8px;border:1px solid #cfd4c8;border-radius:8px">
+           <select title="Обладнання для цього дослідження" onchange="priceData[${gi}].items[${ii}].equip=this.value;persistPrices()" style="width:100%;margin-top:5px;padding:7px;border:1px solid #cfd4c8;border-radius:8px;font-size:11px">
+             <option value="">авто (${apparatusById(typeForCode(it.code)).name})</option>
+             ${(typeof getEquipmentUnits==='function'?getEquipmentUnits():[]).map(u=>`<option value="${u.id}" ${it.equip===u.id?'selected':''}>${esc(u.name)}</option>`).join('')}
+           </select>
+         </div>
          <button class="icon-btn" title="Видалити" onclick="delPriceItem(${gi},${ii})">×</button>
        </div>`).join('')}
      <button class="btn" style="margin-top:6px" onclick="addPriceItem(${gi})">+ Послуга</button>
@@ -911,7 +938,13 @@ function renderEquipEditor(){
   document.getElementById('equipEditor').innerHTML=equipData.map((e,i)=>`
    <div style="display:grid;grid-template-columns:1fr 32px;gap:7px;margin:10px 0">
      <div>
-       <input value="${esc(e.name)}" placeholder="Назва обладнання" onchange="equipData[${i}].name=this.value;saveEquipment(equipData)" style="width:100%;padding:9px;border:1px solid #cfd4c8;border-radius:9px;font-weight:700">
+       <div style="display:grid;grid-template-columns:1fr 150px;gap:7px">
+         <input value="${esc(e.name)}" placeholder="Назва обладнання" onchange="equipData[${i}].name=this.value;saveEquipment(equipData);renderApparatusEditor()" style="padding:9px;border:1px solid #cfd4c8;border-radius:9px;font-weight:700">
+         <select onchange="equipData[${i}].type=this.value;saveEquipment(equipData);renderApparatusEditor();renderApparatusTabs();renderCalendar()" style="padding:9px;border:1px solid #cfd4c8;border-radius:9px">
+           <option value="xray" ${e.type!=='ct'?'selected':''}>Рентген · 15 хв</option>
+           <option value="ct" ${e.type==='ct'?'selected':''}>КТ · 30 хв</option>
+         </select>
+       </div>
        <textarea rows="2" placeholder="Опис і призначення" onchange="equipData[${i}].desc=this.value;saveEquipment(equipData)" style="width:100%;margin-top:5px;padding:9px;border:1px solid #cfd4c8;border-radius:9px;font:inherit;font-size:13px;resize:vertical">${esc(e.desc||'')}</textarea>
      </div>
      <button class="icon-btn" onclick="equipData.splice(${i},1);saveEquipment(equipData);renderEquipEditor()">×</button>
@@ -1058,32 +1091,34 @@ function pushApparatusState(){
 }
 function renderApparatusEditor(){
   const box=document.getElementById('apparatusEditor');
-  if(!box||!appState||typeof APPARATUS==='undefined') return;
+  if(!box||!appState||typeof getEquipmentUnits!=='function') return;
   const dayNames=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
   const staffOpts=(staffData||[]).map(p=>p.name||p.role).filter(Boolean);
-  box.innerHTML=APPARATUS.map(a=>{
-    const st=appState[a.id];
+  box.innerHTML=getEquipmentUnits().map(u=>{
+    const st=appState[u.id]||{active:true,roster:{}};
     return `<div style="border:1px solid #e0e4da;border-radius:12px;padding:12px;margin:10px 0">
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <strong style="font-size:15px">${a.name} · крок ${a.step} хв</strong>
+        <strong style="font-size:15px">${esc(u.name)}</strong>
+        <span style="font-size:12px;color:#6c7562;background:#eef1e9;border-radius:99px;padding:3px 10px">${apparatusById(u.type).name} · ${apparatusById(u.type).step} хв</span>
         <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer">
           <input type="checkbox" ${st.active!==false?'checked':''}
-            onchange="appState['${a.id}'].active=this.checked;pushApparatusState();renderApparatusEditor()">
+            onchange="appState['${u.id}'].active=this.checked;pushApparatusState();renderApparatusEditor()">
           <span style="font-weight:700;color:${st.active!==false?'#2f5c2a':'#9b3b32'}">${st.active!==false?'Працює':'Не працює'}</span>
         </label>
       </div>
-      ${st.active!==false?`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:7px;margin-top:10px">
+      ${st.active!==false?`<div style="margin-top:8px;font-size:12px;font-weight:700;color:#6c7562">Рентгенлаборант на зміні:</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:7px;margin-top:6px">
         ${[1,2,3,4,5,6,0].map(d=>`
           <div>
             <label style="font-size:11px;font-weight:700;color:#6c7562">${dayNames[d]}</label>
-            <select onchange="appState['${a.id}'].roster[${d}]=this.value;pushApparatusState()"
-              style="width:100%;padding:7px;border:1px solid #cfd4c8;border-radius:8px;font-size:12px;background:${st.roster[d]==='OFF'?'#f4dcda':'#fff'}">
-              <option value="" ${st.roster[d]===''?'selected':''}>— за графіком —</option>
-              <option value="OFF" ${st.roster[d]==='OFF'?'selected':''}>✕ Зміни немає</option>
-              ${staffOpts.map(n=>`<option value="${esc(n)}" ${st.roster[d]===n?'selected':''}>${esc(n)}</option>`).join('')}
+            <select onchange="appState['${u.id}'].roster[${d}]=this.value;pushApparatusState()"
+              style="width:100%;padding:7px;border:1px solid #cfd4c8;border-radius:8px;font-size:12px;background:${(st.roster||{})[d]==='OFF'?'#f4dcda':'#fff'}">
+              <option value="" ${(st.roster||{})[d]===''||!(st.roster||{})[d]?'selected':''}>— за графіком —</option>
+              <option value="OFF" ${(st.roster||{})[d]==='OFF'?'selected':''}>✕ Зміни немає</option>
+              ${staffOpts.map(n=>`<option value="${esc(n)}" ${(st.roster||{})[d]===n?'selected':''}>${esc(n)}</option>`).join('')}
             </select>
           </div>`).join('')}
-      </div>`:'<div style="margin-top:8px;font-size:13px;color:#9b3b32">Апарат вимкнено: запис недоступний, у розкладі всі слоти закриті.</div>'}
+      </div>`:'<div style="margin-top:8px;font-size:13px;color:#9b3b32">Машину вимкнено: запис недоступний, у розкладі всі слоти закриті.</div>'}
     </div>`;}).join('');
 }
 function apparatusDayInfo(appId,dateISO){
