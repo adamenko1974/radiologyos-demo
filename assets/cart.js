@@ -124,7 +124,6 @@ function pushToStaffPanel({ name, phone, category, studies, desiredDate, desired
 /* --- Формування заявки --- */
 
 const requestForm = document.getElementById('requestForm');
-let lastRequestText = '';
 let pickedSlot = { date: '', time: '' };
 
 /* Апарат за вмістом кошика: якщо є хоч одне КТ — КТ, інакше рентген */
@@ -174,11 +173,7 @@ requestForm?.addEventListener('submit', e => {
   const ref = document.getElementById('referral').value;
   const comment = document.getElementById('comment').value.trim() || '—';
   const files = [...(document.getElementById('medicalFiles')?.files || [])];
-  const fileInfo = files.length ? files.map(f => f.name).join(', ') : 'не додані';
 
-  const list = cart.map((x, i) => `${i + 1}. ${x.name} — ${money(x.price)}`).join('\n');
-  const total = money(cart.reduce((s, x) => s + x.price, 0));
-  lastRequestText = `Заявка на обстеження\n\nПацієнт: ${name}\nТелефон: ${phone}\nБажана дата: ${humanDate(dateISO) || 'не вказана'}\nЗручний час: ${pickedSlot.time ? pickedSlot.time + ' (обрано з розкладу)' : time}\nНаправлення: ${ref}\nПопередній висновок: ${fileInfo}\n\nОбрані послуги:\n${list}\n\nОрієнтовна сума: ${total}\nКоментар: ${comment}\n\nПрошу зв'язатися для підтвердження запису.`;
 
   const sid = (crypto.randomUUID ? crypto.randomUUID() : 'sid-' + Date.now());
   const commentFull = [ref, time !== 'будь-який' ? 'Зручний час: ' + time : '', comment !== '—' ? comment : ''].filter(Boolean).join('. ');
@@ -202,20 +197,21 @@ requestForm?.addEventListener('submit', e => {
     comment: [pickedSlot.time ? 'Обраний час: ' + pickedSlot.time : '', commentFull].filter(Boolean).join('. ')
   });
 
-  showSuccess(files.length > 0);
+  const escS = t => String(t ?? '').replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+  showSuccess(
+    `<div><strong>Дослідження:</strong> ${cart.map(x => escS(x.name)).join('; ')}</div>` +
+    (dateISO ? `<div><strong>Бажана дата:</strong> ${humanDate(dateISO)}${pickedSlot.time ? ' о ' + pickedSlot.time : ''}</div>` : '') +
+    `<div><strong>Телефон для зв'язку:</strong> ${escS(phone)}</div>` +
+    (files.length ? `<div><strong>Файли:</strong> принесіть попередній висновок із собою або передайте реєстратурі</div>` : '')
+  );
 });
 
-function showSuccess(hasFiles) {
-  document.getElementById('requestText').textContent = lastRequestText;
-  const enc = encodeURIComponent(lastRequestText);
-  document.getElementById('waLink').href = `https://wa.me/${PHONE}?text=${enc}`;
-  document.getElementById('vbLink').href = `viber://chat?number=%2B${PHONE}`;
-  const em = document.getElementById('emLink');
-  if (em && typeof REGISTRY_EMAIL !== 'undefined' && REGISTRY_EMAIL) {
-    em.hidden = false;
-    em.href = `mailto:${REGISTRY_EMAIL}?subject=${encodeURIComponent('Заявка на обстеження')}&body=${enc}`;
-  }
-  document.getElementById('filesReminder').hidden = !hasFiles;
+function showSuccess(summary) {
+  const box = document.getElementById('successSummary');
+  if (box) box.innerHTML = summary;
+  /* якщо онлайн-передача не налаштована — заявка НЕ дійде до реєстратури: чесно кажемо подзвонити */
+  const off = document.getElementById('offlineNote');
+  if (off) off.hidden = !!(typeof NOTIFY_ENDPOINT !== 'undefined' && NOTIFY_ENDPOINT);
   requestForm.hidden = true;
   document.getElementById('successPanel').hidden = false;
   document.querySelector('.cart-total').style.display = 'none';
@@ -224,31 +220,8 @@ function showSuccess(hasFiles) {
   saveCart();
 }
 
-function copyRequestText() {
-  const done = () => {
-    const b = document.getElementById('copyBtn');
-    b.textContent = '✓ Скопійовано';
-    setTimeout(() => { b.textContent = 'Скопіювати текст'; }, 2000);
-  };
-  if (navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(lastRequestText).then(done).catch(() => fallbackCopy(done));
-  } else fallbackCopy(done);
-}
 
-function fallbackCopy(done) {
-  const ta = document.createElement('textarea');
-  ta.value = lastRequestText;
-  ta.style.position = 'fixed'; ta.style.opacity = '0';
-  document.body.appendChild(ta);
-  ta.select();
-  try { document.execCommand('copy'); done(); } catch (e) { alert('Виділіть текст заявки і скопіюйте вручну.'); }
-  document.body.removeChild(ta);
-}
 
-/* Viber не передає текст у чат — копіюємо перед відкриттям */
-document.getElementById('vbLink')?.addEventListener('click', () => {
-  try { navigator.clipboard?.writeText(lastRequestText); } catch (e) {}
-});
 
 /* повертаємо форму при наступному відкритті заявки */
 const _openCart = openCart;
