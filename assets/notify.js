@@ -95,3 +95,15 @@ function syncSetApparatus(availability) {
     });
   } catch (e) {}
 }
+
+function sendFeedback(payload) {
+  if (!NOTIFY_ENDPOINT) return false;
+  try {
+    fetch(NOTIFY_ENDPOINT, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(Object.assign({ action: 'feedback' }, payload))
+    });
+    return true;
+  } catch (e) { return false; }
+}
